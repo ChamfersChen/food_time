@@ -1,0 +1,80 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": { "navigationBarTitleText": "食光机", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/fridge/index",
+      "style": { "navigationBarTitleText": "我的冰箱", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/fridge/add",
+      "style": { "navigationBarTitleText": "添加食材" }
+    },
+    {
+      "path": "pages/recipes/index",
+      "style": { "navigationBarTitleText": "菜谱推荐", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/recipe-detail/index",
+      "style": { "navigationBarTitleText": "", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/logs/index",
+      "style": { "navigationBarTitleText": "烹饪记录" }
+    },
+    {
+      "path": "pages/logs/add",
+      "style": { "navigationBarTitleText": "", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" }
+    }
+  ],
+  "tabBar": {
+    "color": "#888780",
+    "selectedColor": "#7BBF8E",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/fridge/index",
+        "text": "冰箱",
+        "iconPath": "static/icons/fridge.png",
+        "selectedIconPath": "static/icons/fridge-active.png"
+      },
+      {
+        "pagePath": "pages/recipes/index",
+        "text": "菜谱",
+        "iconPath": "static/icons/recipe.png",
+        "selectedIconPath": "static/icons/recipe-active.png"
+      },
+      {
+        "pagePath": "pages/logs/index",
+        "text": "记录",
+        "iconPath": "static/icons/log.png",
+        "selectedIconPath": "static/icons/log-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/icons/profile.png",
+        "selectedIconPath": "static/icons/profile-active.png"
+      }
+    ]
+  },
+  "globalStyle": {
+    "backgroundColor": "#FAF9F6",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#FAF9F6",
+    "navigationBarTextStyle": "black"
+  }
+}

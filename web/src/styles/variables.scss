@@ -1,0 +1,42 @@
+// 品牌色
+$color-primary:        #7BBF8E;
+$color-primary-light:  #E8F5F1;
+$color-primary-mid:    #C5E8E0;
+$color-sage:           #B2C9B0;
+$color-cream:          #F5F0E8;
+
+// 语义色
+$color-warn:           #F0A050;
+$color-danger:         #E05A50;
+$color-success:        #7BBF8E;
+
+// 文字
+$color-text-1:         #2C2C2A;
+$color-text-2:         #5F5E5A;
+$color-text-3:         #888780;
+
+// 背景 & 边框
+$color-bg:             #FAF9F6;
+$color-bg-card:        #FFFFFF;
+$color-bg-section:     #F5F0E8;
+$color-border:         #E0DED8;
+
+// 间距
+$page-padding:         32rpx;
+$card-padding:         24rpx;
+$card-radius:          20rpx;
+$card-shadow:          0 4rpx 24rpx rgba(0, 0, 0, 0.06);
+
+// 字号
+$font-title:           34rpx;
+$font-body:            28rpx;
+$font-sub:             24rpx;
+$font-label:           20rpx;
+
+// 字重
+$fw-regular:           400;
+$fw-medium:            500;
+$fw-semibold:          600;
+
+// 字体
+$font-family:          -apple-system, "PingFang SC", "HarmonyOS Sans", sans-serif;

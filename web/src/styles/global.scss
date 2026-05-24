@@ -1,0 +1,147 @@
+/* ===== 全局样式重置 ===== */
+@import './variables.scss';
+
+page {
+  background-color: $color-bg;
+  color: $color-text-1;
+  font-family: $font-family;
+  font-size: $font-body;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+view, text, navigator {
+  box-sizing: border-box;
+}
+
+image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 自定义滚动条隐藏 */
+.hide-scrollbar ::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 通用卡片样式 */
+.card {
+  background-color: $color-bg-card;
+  border-radius: $card-radius;
+  box-shadow: $card-shadow;
+  padding: $card-padding;
+}
+
+/* 通用 Section 标题 */
+.section-title {
+  font-size: $font-title;
+  font-weight: $fw-semibold;
+  color: $color-text-1;
+  margin-bottom: 24rpx;
+}
+
+/* 通用按钮主色 */
+.btn-primary {
+  background: linear-gradient(135deg, $color-primary, $color-sage);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 999rpx;
+  font-size: $font-body;
+  font-weight: $fw-medium;
+  text-align: center;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 48rpx;
+  box-shadow: inset 0 2rpx 0 rgba(255,255,255,0.2), inset 0 -2rpx 0 rgba(0,0,0,0.1);
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+/* 通用标签 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: $font-label;
+  font-weight: $fw-medium;
+  letter-spacing: 0.05em;
+
+  &--primary {
+    background-color: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
+
+  &--warn {
+    background-color: rgba($color-warn, 0.15);
+    color: $color-warn;
+  }
+
+  &--danger {
+    background-color: rgba($color-danger, 0.15);
+    color: $color-danger;
+  }
+
+  &--sage {
+    background-color: rgba($color-sage, 0.3);
+    color: #4b6f0d;
+  }
+}
+
+/* 安全区域 */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 呼吸动画 */
+@keyframes breathe {
+  0%, 100% { transform: scale(1.0); }
+  50% { transform: scale(1.008); }
+}
+
+/* 抖动动画 */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4rpx); }
+  75% { transform: translateX(4rpx); }
+}
+
+.breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.shake {
+  animation: shake 0.15s ease;
+}
+
+/* 渐入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* 横向滚动容器 */
+.scroll-x {
+  white-space: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

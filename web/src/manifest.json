@@ -1,0 +1,36 @@
+{
+  "name": "食光机",
+  "appid": "",
+  "description": "别让食材辜负时光",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxe937af1e603126ca",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "postcss": true,
+      "minified": true,
+      "enhance": true,
+      "coverView": true,
+      "showShadowRootInWxmlPanel": true,
+      "compileHotReLoad": true,
+      "ignoreDevUnusedFiles": true,
+      "checkInvalidKey": true,
+      "bigPackageSizeSupport": true
+    },
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于获取您的位置信息"
+      }
+    }
+  },
+  "h5": {
+    "title": "食光机",
+    "router": {
+      "mode": "hash"
+    }
+  }
+}
