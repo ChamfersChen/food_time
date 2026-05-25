@@ -61,9 +61,7 @@
       </view>
     </scroll-view>
 
-    <view class="page-fridge__fab" @tap="goAdd">
-      <text class="page-fridge__fab-icon">＋</text>
-    </view>
+    <FabButton icon="＋" @tap="goAdd" />
   </view>
 </template>
 
@@ -74,6 +72,7 @@ import { useIngredientsStore } from '@/stores/ingredients'
 
 import IngredientCard from '@/components/IngredientCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import FabButton from '@/components/FabButton.vue'
 
 const store = useIngredientsStore()
 const ZONES = [
@@ -258,31 +257,6 @@ onShow(() => {
 
   &__bottom-spacer {
     height: 240rpx;
-  }
-
-  &__fab {
-    position: fixed;
-    right: 40rpx;
-    bottom: calc(160rpx + env(safe-area-inset-bottom));
-    width: 96rpx;
-    height: 96rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, $color-primary, $color-sage);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
-    z-index: 100;
-
-    &:active {
-      transform: scale(0.95);
-    }
-  }
-
-  &__fab-icon {
-    color: #FFFFFF;
-    font-size: 44rpx;
-    font-weight: $fw-medium;
   }
 }
 </style>

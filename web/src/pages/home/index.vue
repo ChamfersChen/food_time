@@ -76,12 +76,7 @@
       </view>
     </view>
 
-    <view
-      class="page-home__fab"
-      @tap="goAddIngredient"
-    >
-      <text class="page-home__fab-icon">＋</text>
-    </view>
+    <FabButton icon="＋" @tap="goAddIngredient" />
   </view>
 </template>
 
@@ -96,6 +91,7 @@ import { getGreeting } from '@/utils/date'
 
 import TodayRecommend from '@/components/TodayRecommend.vue'
 import ExpiryBadge from '@/components/ExpiryBadge.vue'
+import FabButton from '@/components/FabButton.vue'
 
 const CATEGORY_LIST = [
   { value: 'vegetables', label: '蔬菜', icon: '🥬', bgColor: '#E8F5F1' },
@@ -366,31 +362,6 @@ onShow(() => {
     font-size: $font-label;
     color: $color-text-3;
     margin-top: 4rpx;
-  }
-
-  &__fab {
-    position: fixed;
-    right: 40rpx;
-    bottom: 160rpx;
-    width: 96rpx;
-    height: 96rpx;
-    border-radius: 24rpx;
-    background: linear-gradient(135deg, $color-primary, $color-sage);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 12rpx 40rpx rgba($color-primary, 0.3);
-    z-index: 100;
-
-    &:active {
-      transform: scale(0.95);
-    }
-  }
-
-  &__fab-icon {
-    color: #FFFFFF;
-    font-size: 44rpx;
-    font-weight: $fw-medium;
   }
 }
 </style>

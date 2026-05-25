@@ -21,6 +21,10 @@
       "style": { "navigationBarTitleText": "", "navigationStyle": "custom" }
     },
     {
+      "path": "pages/recipes/add",
+      "style": { "navigationBarTitleText": "创建菜谱" }
+    },
+    {
       "path": "pages/logs/index",
       "style": { "navigationBarTitleText": "烹饪记录" }
     },

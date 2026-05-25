@@ -16,7 +16,7 @@
       "coverView": true,
       "showShadowRootInWxmlPanel": true,
       "compileHotReLoad": true,
-      "ignoreDevUnusedFiles": true,
+      "ignoreDevUnusedFiles": false,
       "checkInvalidKey": true,
       "bigPackageSizeSupport": true
     },

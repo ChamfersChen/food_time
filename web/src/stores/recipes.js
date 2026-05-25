@@ -7,6 +7,8 @@ import {
   getRandomRecipe,
   searchRecipes,
   toggleFavorite,
+  createRecipe,
+  importRecipe,
 } from '@/api/recipes'
 
 const WARM_MESSAGES = [
@@ -20,7 +22,7 @@ const WARM_MESSAGES = [
 const RECIPE_TAGS = [
   { value: '', label: '全部' },
   { value: '家常', label: '家常' },
-  { value: '快手', label: '快手' },
+  // { value: '快手', label: '快手' },
   { value: '低卡', label: '低卡' },
   { value: '汤类', label: '汤类' },
   { value: '早餐', label: '早餐' },
@@ -114,6 +116,18 @@ export const useRecipesStore = defineStore('recipes', () => {
     return res
   }
 
+  async function addRecipe(data) {
+    const res = await createRecipe(data)
+    recipeList.value.unshift(res.recipe || res)
+    return res
+  }
+
+  async function addFromLink(data) {
+    const res = await importRecipe(data)
+    recipeList.value.unshift(res.recipe || res)
+    return res
+  }
+
   function refreshWarmMessage() {
     warmMessage.value = WARM_MESSAGES[Math.floor(Math.random() * WARM_MESSAGES.length)]
   }
@@ -123,5 +137,6 @@ export const useRecipesStore = defineStore('recipes', () => {
     warmMessage, WARM_MESSAGES, RECIPE_TAGS,
     filteredList,
     fetchRecommended, fetchList, fetchDetail, fetchRandom, search, toggleFav, refreshWarmMessage,
+    createRecipe: addRecipe, importFromLink: addFromLink,
   }
 })

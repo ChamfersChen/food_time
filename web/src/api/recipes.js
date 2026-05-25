@@ -23,3 +23,11 @@ export function searchRecipes(keyword) {
 export function toggleFavorite(recipeId) {
   return post(`/recipes/${recipeId}/favorite`)
 }
+
+export function createRecipe(data) {
+  return post('/recipes', data)
+}
+
+export function importRecipe(data) {
+  return post('/recipes/import', data)
+}

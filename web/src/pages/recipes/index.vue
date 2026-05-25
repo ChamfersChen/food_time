@@ -6,14 +6,20 @@
     </view>
 
     <view class="page-recipes__actions">
-      <button
-        class="page-recipes__random-btn"
-        :class="{ 'shake': isShaking }"
-        @tap="onRandomRecipe"
-      >
-        <text class="page-recipes__random-icon">🎲</text>
-        今晚吃什么
-      </button>
+      <view class="page-recipes__actions-row">
+        <button
+          class="page-recipes__random-btn"
+          :class="{ 'shake': isShaking }"
+          @tap="onRandomRecipe"
+        >
+          <text class="page-recipes__random-icon">🎲</text>
+          今晚吃什么
+        </button>
+        <view class="page-recipes__create-btn" @tap="onAddRecipe">
+          <text class="page-recipes__create-icon">＋</text>
+          <text class="page-recipes__create-text">添加菜谱</text>
+        </view>
+      </view>
     </view>
 
     <view class="page-recipes__tags">
@@ -54,9 +60,7 @@
       </view>
     </scroll-view>
 
-    <view class="page-recipes__fab" @tap="onRandomRecipe">
-      <text class="page-recipes__fab-icon">✨</text>
-    </view>
+    <FabButton icon="✨" @tap="onRandomRecipe" />
   </view>
 </template>
 
@@ -67,6 +71,7 @@ import { useRecipesStore } from '@/stores/recipes'
 
 import RecipeCard from '@/components/RecipeCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import FabButton from '@/components/FabButton.vue'
 
 const store = useRecipesStore()
 
@@ -104,6 +109,19 @@ function goDetail(recipe) {
 
 function onLoadMore() {
   // TODO: load more recipes
+}
+
+function onAddRecipe() {
+  uni.showActionSheet({
+    itemList: ['自己创建菜谱', '通过链接导入（小红书等）'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        uni.navigateTo({ url: '/pages/recipes/add' })
+      } else if (res.tapIndex === 1) {
+        uni.navigateTo({ url: '/pages/recipes/add?mode=import' })
+      }
+    },
+  })
 }
 
 onMounted(async () => {
@@ -154,8 +172,13 @@ onShow(() => {
     margin-bottom: 24rpx;
   }
 
+  &__actions-row {
+    display: flex;
+    gap: 16rpx;
+  }
+
   &__random-btn {
-    width: 100%;
+    flex: 1;
     height: 96rpx;
     border-radius: 20rpx;
     background: linear-gradient(135deg, $color-primary, $color-sage);
@@ -171,6 +194,35 @@ onShow(() => {
     &:active {
       opacity: 0.9;
     }
+  }
+
+  &__create-btn {
+    width: 184rpx;
+    height: 96rpx;
+    border-radius: 20rpx;
+    background-color: rgba($color-primary, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rpx;
+
+    &:active {
+      opacity: 0.8;
+    }
+  }
+
+  &__create-icon {
+    font-size: 28rpx;
+    color: $color-primary;
+    font-weight: $fw-medium;
+    line-height: 1;
+  }
+
+  &__create-text {
+    font-size: 20rpx;
+    color: $color-primary;
+    font-weight: $fw-medium;
   }
 
   &__random-icon {
@@ -215,29 +267,6 @@ onShow(() => {
     padding: 80rpx 0;
     color: $color-text-3;
     font-size: $font-sub;
-  }
-
-  &__fab {
-    position: fixed;
-    right: 40rpx;
-    bottom: calc(170rpx + env(safe-area-inset-bottom));
-    width: 96rpx;
-    height: 96rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, $color-primary, $color-sage);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 20rpx rgba($color-primary, 0.4);
-    z-index: 100;
-
-    &:active {
-      transform: scale(0.95);
-    }
-  }
-
-  &__fab-icon {
-    font-size: 40rpx;
   }
 }
 </style>

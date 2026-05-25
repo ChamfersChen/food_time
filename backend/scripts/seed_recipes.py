@@ -13,7 +13,8 @@ RECIPES = [
     {
         "name": "番茄炒蛋",
         "description": "家常经典，酸甜可口，5分钟搞定",
-        "tags": ["家常", "快手", "下饭"],
+        "tags": ["家常", "下饭"],
+        # "tags": ["家常", "快手", "下饭"],
         "cuisine": "家常",
         "cook_time": 10,
         "difficulty": "easy",
@@ -36,8 +37,8 @@ RECIPES = [
     },
     {
         "name": "蒜蓉西兰花",
-        "description": "清淡健康的快手菜，保留蔬菜本身的清甜",
-        "tags": ["家常", "快手", "低卡", "清淡"],
+        "description": "清淡健康的菜，保留蔬菜本身的清甜",
+        "tags": ["家常", "低卡", "清淡"],
         "cuisine": "家常",
         "cook_time": 8,
         "difficulty": "easy",
@@ -86,7 +87,7 @@ RECIPES = [
     {
         "name": "牛油果流心蛋吐司",
         "description": "清晨的能量唤醒，外酥里嫩的完美搭配",
-        "tags": ["早餐", "快手", "低卡"],
+        "tags": ["早餐", "低卡"],
         "cuisine": "西餐",
         "cook_time": 15,
         "difficulty": "easy",
@@ -110,7 +111,7 @@ RECIPES = [
     {
         "name": "清炒时蔬",
         "description": "周末清理冰箱的清爽选择，简单就是幸福",
-        "tags": ["家常", "快手", "清淡", "低卡"],
+        "tags": ["家常", "清淡", "低卡"],
         "cuisine": "家常",
         "cook_time": 8,
         "difficulty": "easy",
@@ -132,7 +133,7 @@ RECIPES = [
     {
         "name": "香煎柠檬三文鱼",
         "description": "优质蛋白低脂健康，15分钟搞定的高级感料理",
-        "tags": ["快手", "低卡", "健康"],
+        "tags": ["低卡", "健康"],
         "cuisine": "西餐",
         "cook_time": 15,
         "difficulty": "easy",
@@ -204,7 +205,7 @@ RECIPES = [
     {
         "name": "鸡胸肉沙拉",
         "description": "减脂期的蛋白质补给站，清爽零负担",
-        "tags": ["低卡", "快手", "健康"],
+        "tags": ["低卡", "健康"],
         "cuisine": "西餐",
         "cook_time": 15,
         "difficulty": "easy",
