@@ -25,7 +25,6 @@ yarn-error.log*
 *.log
 *.mom.yml
 log
-logs
 *.log.*
 *.db
 *.lock

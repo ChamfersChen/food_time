@@ -54,4 +54,35 @@ export function del(url, data) {
   return request({ url, method: 'DELETE', data })
 }
 
+export function upload(url, filePath, name = 'file') {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('jwt_token')
+    uni.uploadFile({
+      url: BASE_URL + url,
+      filePath,
+      name,
+      header: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            resolve(JSON.parse(res.data))
+          } catch {
+            resolve(res.data)
+          }
+        } else {
+          const msg = (() => { try { return JSON.parse(res.data).message } catch { return '上传失败' } })()
+          uni.showToast({ title: msg, icon: 'none' })
+          reject(new Error(msg))
+        }
+      },
+      fail: (err) => {
+        uni.showToast({ title: '网络错误，请重试', icon: 'none' })
+        reject(err)
+      },
+    })
+  })
+}
+
 export default request

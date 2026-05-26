@@ -3,7 +3,6 @@
     <view class="page-home__header">
       <view class="page-home__greeting">
         <text class="page-home__greeting-text">{{ greeting }}，\n{{ nickname }}</text>
-        <text class="page-home__greeting-sub">今天也要好好吃饭呀</text>
       </view>
       <view class="page-home__avatar-wrap" @tap="goProfile">
         <image
@@ -11,13 +10,6 @@
           :src="avatarUrl || 'https://picsum.photos/200/200?random=user'"
           mode="aspectFill"
         />
-      </view>
-    </view>
-
-    <view class="page-home__search" @tap="goSearch">
-      <view class="page-home__search-inner">
-        <text class="page-home__search-icon">🔍</text>
-        <text class="page-home__search-placeholder">搜索食材或食谱...</text>
       </view>
     </view>
 
@@ -152,10 +144,6 @@ function goProfile() {
   uni.switchTab({ url: '/pages/profile/index' })
 }
 
-function goSearch() {
-  uni.navigateTo({ url: '/pages/fridge/index?search=1' })
-}
-
 onMounted(async () => {
   recommendLoading.value = true
   try {
@@ -184,7 +172,7 @@ onShow(() => {
     justify-content: space-between;
     align-items: center;
     padding: $page-padding;
-    padding-top: calc(env(safe-area-inset-top) + 20rpx);
+    padding-top: $page-padding;
   }
 
   &__greeting {
@@ -199,13 +187,6 @@ onShow(() => {
     white-space: pre-line;
   }
 
-  &__greeting-sub {
-    display: block;
-    font-size: $font-sub;
-    color: $color-text-3;
-    margin-top: 4rpx;
-  }
-
   &__avatar-wrap {
     width: 88rpx;
     height: 88rpx;
@@ -217,30 +198,6 @@ onShow(() => {
   &__avatar {
     width: 100%;
     height: 100%;
-  }
-
-  &__search {
-    padding: 0 $page-padding;
-    margin-bottom: 32rpx;
-  }
-
-  &__search-inner {
-    display: flex;
-    align-items: center;
-    height: 80rpx;
-    background-color: $color-bg-section;
-    border-radius: 999rpx;
-    padding: 0 28rpx;
-  }
-
-  &__search-icon {
-    font-size: 28rpx;
-    margin-right: 16rpx;
-  }
-
-  &__search-placeholder {
-    font-size: $font-sub;
-    color: $color-text-3;
   }
 
   &__section {

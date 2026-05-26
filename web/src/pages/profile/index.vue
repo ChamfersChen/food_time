@@ -92,10 +92,13 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
+import { uploadAvatar as uploadAvatarApi } from '@/api/users'
+import { setUserInfo } from '@/utils/storage'
 
 
 const userStore = useUserStore()
 const stats = ref({ totalMeals: 0, streakDays: 0 })
+const uploading = ref(false)
 
 const nickname = computed(() => userStore.nickname)
 const avatarUrl = computed(() => userStore.avatarUrl)
@@ -116,8 +119,30 @@ const preferenceTags = computed(() => {
   return tags.length ? tags : ['🍽 美食爱好者']
 })
 
-function goEditProfile() {
-  // TODO: navigate to edit profile page
+async function goEditProfile() {
+  if (uploading.value) return
+  try {
+    const res = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        success: resolve,
+        fail: reject,
+      })
+    })
+    const tempFile = res.tempFilePaths[0]
+    uploading.value = true
+    uni.showLoading({ title: '上传中...' })
+    const result = await uploadAvatarApi(tempFile)
+    userStore.userInfo.avatar_url = result.avatar_url
+    setUserInfo({ ...userStore.userInfo })
+    uni.hideLoading()
+    uni.showToast({ title: '头像已更新', icon: 'success' })
+  } catch {
+    uni.hideLoading()
+  } finally {
+    uploading.value = false
+  }
 }
 
 function goNotificationSettings() {
@@ -156,7 +181,7 @@ onShow(async () => {
     flex-direction: column;
     align-items: center;
     padding: $page-padding;
-    padding-top: calc(env(safe-area-inset-top) + 40rpx);
+    padding-top: $page-padding;
     margin-bottom: 32rpx;
   }
 

@@ -1,10 +1,5 @@
 <template>
   <view class="page-fridge">
-    <view class="page-fridge__header">
-      <text class="page-fridge__title">食材管理</text>
-      <text class="page-fridge__count">共 {{ notConsumed.length }} 项</text>
-    </view>
-
     <view class="page-fridge__search">
       <view class="page-fridge__search-inner">
         <text class="page-fridge__search-icon">🔍</text>
@@ -149,28 +144,8 @@ onShow(() => {
   display: flex;
   flex-direction: column;
 
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: $page-padding;
-    padding-top: calc(env(safe-area-inset-top) + 20rpx);
-  }
-
-  &__title {
-    font-size: 44rpx;
-    font-weight: $fw-semibold;
-    color: $color-text-1;
-  }
-
-  &__count {
-    font-size: $font-sub;
-    color: $color-text-3;
-    margin-bottom: 4rpx;
-  }
-
   &__search {
-    padding: 16rpx $page-padding;
+    padding: $page-padding $page-padding 16rpx;
   }
 
   &__search-inner {

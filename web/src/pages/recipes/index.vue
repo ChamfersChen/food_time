@@ -2,7 +2,6 @@
   <view class="page-recipes">
     <view class="page-recipes__header">
       <text class="page-recipes__title">{{ warmMessage }}</text>
-      <text class="page-recipes__subtitle">发现冰箱里的宝藏食材，让每一顿饭都充满惊喜。</text>
     </view>
 
     <view class="page-recipes__actions">
@@ -149,8 +148,8 @@ onShow(() => {
 
   &__header {
     padding: $page-padding;
-    padding-top: calc(env(safe-area-inset-top) + 20rpx);
-    margin-bottom: 16rpx;
+    padding-top: $page-padding;
+    margin-bottom: 0rpx;
   }
 
   &__title {
@@ -159,12 +158,6 @@ onShow(() => {
     font-weight: $fw-semibold;
     color: $color-text-1;
     margin-bottom: 8rpx;
-  }
-
-  &__subtitle {
-    display: block;
-    font-size: $font-sub;
-    color: $color-text-3;
   }
 
   &__actions {

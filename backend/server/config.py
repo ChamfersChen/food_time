@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE_MB: int = 10
 
+    # MinIO
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_BUCKET: str = "food-time"
+    MINIO_USE_SSL: bool = False
+    MINIO_PUBLIC_URL: str = "http://localhost:9000"
+
     APP_ENV: str = "development"
     LOG_LEVEL: str = "INFO"
 

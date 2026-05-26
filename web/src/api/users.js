@@ -1,4 +1,5 @@
 import { get, put } from './request'
+import { upload } from './request'
 
 export function getUserProfile() {
   return get('/users/profile')
@@ -14,4 +15,8 @@ export function updatePreferences(data) {
 
 export function getStatistics() {
   return get('/users/statistics')
+}
+
+export function uploadAvatar(filePath) {
+  return upload('/users/avatar', filePath, 'file')
 }

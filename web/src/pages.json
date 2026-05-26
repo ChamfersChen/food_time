@@ -2,11 +2,11 @@
   "pages": [
     {
       "path": "pages/home/index",
-      "style": { "navigationBarTitleText": "食光机", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "食光机" }
     },
     {
       "path": "pages/fridge/index",
-      "style": { "navigationBarTitleText": "我的冰箱", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "我的冰箱" }
     },
     {
       "path": "pages/fridge/add",
@@ -14,7 +14,7 @@
     },
     {
       "path": "pages/recipes/index",
-      "style": { "navigationBarTitleText": "菜谱推荐", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "菜谱推荐" }
     },
     {
       "path": "pages/recipe-detail/index",
@@ -34,7 +34,7 @@
     },
     {
       "path": "pages/profile/index",
-      "style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "我的" }
     }
   ],
   "tabBar": {

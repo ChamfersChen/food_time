@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from server.database import get_db
@@ -7,6 +7,8 @@ from server.models.cooking_log import CookingLog
 from server.models.ingredient import Ingredient
 from server.schemas.user import UserUpdateRequest, UserResponse
 from server.middleware.auth_middleware import get_current_user
+from server.utils.minio_client import upload_avatar, validate_image_ext
+from server.config import get_settings
 from datetime import date, timedelta
 
 router = APIRouter(prefix="/users", tags=["用户"])
@@ -111,3 +113,29 @@ async def get_statistics(
         "streakDays": streak_days,
         "savedItems": saved_items,
     }
+
+
+@router.post("/avatar")
+async def upload_user_avatar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    settings = get_settings()
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="文件名为空")
+
+    file_ext = validate_image_ext(file.filename)
+    if file_ext is None:
+        raise HTTPException(status_code=400, detail="仅支持 jpg/jpeg/png/webp 格式")
+
+    contents = await file.read()
+    if len(contents) > settings.MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"文件大小不能超过 {settings.MAX_FILE_SIZE_MB}MB")
+
+    url = await upload_avatar(contents, file_ext)
+    current_user.avatar_url = url
+    await db.commit()
+    await db.refresh(current_user)
+
+    return {"avatar_url": url, "user": UserResponse.model_validate(current_user)}
