@@ -68,7 +68,6 @@
       </view>
     </view>
 
-    <FabButton icon="＋" @tap="goAddIngredient" />
   </view>
 </template>
 
@@ -83,7 +82,6 @@ import { getGreeting } from '@/utils/date'
 
 import TodayRecommend from '@/components/TodayRecommend.vue'
 import ExpiryBadge from '@/components/ExpiryBadge.vue'
-import FabButton from '@/components/FabButton.vue'
 
 const CATEGORY_LIST = [
   { value: 'vegetables', label: '蔬菜', icon: '🥬', bgColor: '#E8F5F1' },
@@ -134,10 +132,6 @@ function goFridge() {
 
 function goFridgeCategory(cat) {
   uni.switchTab({ url: `/pages/fridge/index?category=${cat}` })
-}
-
-function goAddIngredient() {
-  uni.navigateTo({ url: '/pages/fridge/add' })
 }
 
 function goProfile() {

@@ -1,13 +1,5 @@
 <template>
   <view class="page-log-add">
-    <view class="page-log-add__header">
-      <view class="page-log-add__back" @tap="goBack">
-        <text class="page-log-add__back-icon">←</text>
-      </view>
-      <text class="page-log-add__title">{{ isEdit ? '编辑记录' : '添加烹饪记录' }}</text>
-      <view class="page-log-add__placeholder" />
-    </view>
-
     <view class="page-log-add__form">
       <view class="page-log-add__field">
         <text class="page-log-add__label">菜谱名称</text>
@@ -75,6 +67,19 @@
           :maxlength="200"
         />
       </view>
+
+      <view v-if="form.photo_urls?.length" class="page-log-add__field">
+        <text class="page-log-add__label">成品照片</text>
+        <scroll-view class="page-log-add__photos" scroll-x enable-flex>
+          <image
+            v-for="(url, idx) in form.photo_urls"
+            :key="idx"
+            class="page-log-add__photo"
+            :src="url"
+            mode="aspectFill"
+          />
+        </scroll-view>
+      </view>
     </view>
 
     <view class="page-log-add__footer">
@@ -110,6 +115,7 @@ const form = ref({
   cooked_date: formatDate(new Date()),
   rating: 5,
   note: '',
+  photo_urls: [],
 })
 
 onLoad((options) => {
@@ -117,6 +123,9 @@ onLoad((options) => {
     isEdit.value = true
     editId.value = options.id
     loadLog(options.id)
+    uni.setNavigationBarTitle({ title: '编辑记录' })
+  } else {
+    uni.setNavigationBarTitle({ title: '添加烹饪记录' })
   }
 })
 
@@ -129,6 +138,7 @@ async function loadLog(id) {
       cooked_date: data.cooked_at ? formatDate(data.cooked_at) : formatDate(new Date()),
       rating: data.rating || 5,
       note: data.note || '',
+      photo_urls: data.photo_urls || [],
     }
   } catch (e) {
     uni.showToast({ title: '加载失败', icon: 'none' })
@@ -137,10 +147,6 @@ async function loadLog(id) {
 
 function onDateChange(e) {
   form.value.cooked_date = e.detail.value
-}
-
-function goBack() {
-  uni.navigateBack()
 }
 
 async function onSubmit() {
@@ -173,38 +179,6 @@ async function onSubmit() {
   min-height: 100vh;
   background-color: $color-bg;
   padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: $page-padding;
-    padding-top: calc(env(safe-area-inset-top) + 20rpx);
-    background-color: $color-bg;
-  }
-
-  &__back {
-    width: 60rpx;
-    height: 60rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &__back-icon {
-    font-size: 36rpx;
-    color: $color-text-1;
-  }
-
-  &__title {
-    font-size: $font-title;
-    font-weight: $fw-semibold;
-    color: $color-text-1;
-  }
-
-  &__placeholder {
-    width: 60rpx;
-  }
 
   &__form {
     padding: 0 $page-padding;
@@ -336,6 +310,20 @@ async function onSubmit() {
     height: 96rpx;
     line-height: 96rpx;
     border-radius: 999rpx;
+  }
+
+  &__photos {
+    display: flex;
+    gap: 16rpx;
+    white-space: nowrap;
+  }
+
+  &__photo {
+    width: 200rpx;
+    height: 200rpx;
+    border-radius: 16rpx;
+    background-color: $color-bg;
+    flex-shrink: 0;
   }
 }
 </style>

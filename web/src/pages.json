@@ -18,7 +18,7 @@
     },
     {
       "path": "pages/recipe-detail/index",
-      "style": { "navigationBarTitleText": "", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "菜谱详情" }
     },
     {
       "path": "pages/recipes/add",
@@ -30,7 +30,7 @@
     },
     {
       "path": "pages/logs/add",
-      "style": { "navigationBarTitleText": "", "navigationStyle": "custom" }
+      "style": { "navigationBarTitleText": "烹饪记录" }
     },
     {
       "path": "pages/profile/index",

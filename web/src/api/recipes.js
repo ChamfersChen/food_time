@@ -1,4 +1,4 @@
-import { get, post } from './request'
+import { get, post, put } from './request'
 
 export function getRecipes(params) {
   return get('/recipes', params)
@@ -26,6 +26,10 @@ export function toggleFavorite(recipeId) {
 
 export function createRecipe(data) {
   return post('/recipes', data)
+}
+
+export function updateRecipe(id, data) {
+  return put(`/recipes/${id}`, data)
 }
 
 export function importRecipe(data) {

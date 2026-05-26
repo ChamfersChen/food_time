@@ -8,6 +8,7 @@ import {
   searchRecipes,
   toggleFavorite,
   createRecipe,
+  updateRecipe,
   importRecipe,
 } from '@/api/recipes'
 
@@ -122,6 +123,18 @@ export const useRecipesStore = defineStore('recipes', () => {
     return res
   }
 
+  async function editRecipe(id, data) {
+    const res = await updateRecipe(id, data)
+    if (currentRecipe.value && currentRecipe.value.id === id) {
+      currentRecipe.value = { ...currentRecipe.value, ...data }
+    }
+    const idx = recipeList.value.findIndex(r => r.id === id)
+    if (idx !== -1) {
+      recipeList.value[idx] = { ...recipeList.value[idx], ...data }
+    }
+    return res
+  }
+
   async function addFromLink(data) {
     const res = await importRecipe(data)
     recipeList.value.unshift(res.recipe || res)
@@ -137,6 +150,6 @@ export const useRecipesStore = defineStore('recipes', () => {
     warmMessage, WARM_MESSAGES, RECIPE_TAGS,
     filteredList,
     fetchRecommended, fetchList, fetchDetail, fetchRandom, search, toggleFav, refreshWarmMessage,
-    createRecipe: addRecipe, importFromLink: addFromLink,
+    createRecipe: addRecipe, importFromLink: addFromLink, editRecipe,
   }
 })

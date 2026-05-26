@@ -34,7 +34,13 @@
               @tap="goDetail(log)"
             >
               <view class="page-logs__card-left">
-                <text class="page-logs__card-emoji">{{ getMealEmoji(log.meal_type) }}</text>
+                <image
+                  v-if="log.photo_urls?.[0]"
+                  class="page-logs__card-avatar"
+                  :src="log.photo_urls[0]"
+                  mode="aspectFill"
+                />
+                <text v-else class="page-logs__card-emoji">{{ getMealEmoji(log.meal_type) }}</text>
               </view>
               <view class="page-logs__card-center">
                 <text class="page-logs__card-name">{{ log.recipe_name || '未命名' }}</text>
@@ -167,6 +173,14 @@ onShow(() => {
 
   &__card-left {
     margin-right: 20rpx;
+    flex-shrink: 0;
+  }
+
+  &__card-avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 12rpx;
+    background-color: $color-bg;
   }
 
   &__card-emoji {

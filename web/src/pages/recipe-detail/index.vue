@@ -7,8 +7,9 @@
         mode="aspectFill"
       />
       <view class="page-detail__hero-overlay" />
-      <view class="page-detail__back" @tap="goBack">
-        <text class="page-detail__back-icon">←</text>
+      <view class="page-detail__change-cover" @tap="onChangeCover">
+        <text class="page-detail__change-cover-icon">📷</text>
+        <text class="page-detail__change-cover-text">更换封面</text>
       </view>
       <view class="page-detail__fav" @tap="onToggleFav">
         <text class="page-detail__fav-icon" :class="{ 'page-detail__fav-icon--active': recipe.is_favorited }">
@@ -121,6 +122,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useRecipesStore } from '@/stores/recipes'
 import { createCookingLog } from '@/api/cooking_logs'
+import { upload } from '@/api/request'
 import CookDoneModal from '@/components/CookDoneModal.vue'
 
 const store = useRecipesStore()
@@ -137,6 +139,7 @@ onLoad(async (options) => {
     try {
       const data = await store.fetchDetail(options.id)
       recipe.value = data
+      uni.setNavigationBarTitle({ title: data.name || '菜谱详情' })
       if (data.ingredients) {
         const missingIngredients = data.ingredients.filter(i => !i.inFridge && i.is_essential)
         if (missingIngredients.length > 0) {
@@ -150,8 +153,24 @@ onLoad(async (options) => {
   }
 })
 
-function goBack() {
-  uni.navigateBack()
+async function onChangeCover() {
+  if (!recipe.value.id) return
+  try {
+    const res = await new Promise((resolve, reject) => {
+      uni.chooseImage({ count: 1, success: resolve, fail: reject })
+    })
+    if (!res?.tempFilePaths?.[0]) return
+    uni.showLoading({ title: '上传中...' })
+    const tempFile = res.tempFilePaths[0]
+    const result = await upload('/upload', tempFile, 'file')
+    await store.editRecipe(recipe.value.id, { cover_url: result.url })
+    recipe.value.cover_url = result.url
+    uni.hideLoading()
+    uni.showToast({ title: '封面已更换', icon: 'none' })
+  } catch {
+    uni.hideLoading()
+    uni.showToast({ title: '更换失败', icon: 'none' })
+  }
 }
 
 async function onToggleFav() {
@@ -181,7 +200,7 @@ async function onCookDone(data) {
       rating: data.rating,
       mood: data.mood,
       note: data.note,
-      photo_urls: data.photo_url ? [data.photo_url] : [],
+      photo_urls: data.photo_urls || [],
       consumed_ingredients: recipe.value.ingredients
         ?.filter(i => i.inFridge)
         .map(i => ({
@@ -226,23 +245,26 @@ async function onCookDone(data) {
     background: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
   }
 
-  &__back {
+  &__change-cover {
     position: absolute;
-    top: calc(env(safe-area-inset-top) + 20rpx);
-    left: 32rpx;
-    width: 72rpx;
-    height: 72rpx;
-    border-radius: 50%;
-    background-color: rgba(255,255,255,0.85);
+    bottom: 24rpx;
+    right: 32rpx;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8rpx;
+    padding: 12rpx 24rpx;
+    border-radius: 32rpx;
+    background-color: rgba(0,0,0,0.45);
     z-index: 10;
-  }
 
-  &__back-icon {
-    font-size: 32rpx;
-    color: $color-text-1;
+    &-icon {
+      font-size: 28rpx;
+    }
+
+    &-text {
+      font-size: 24rpx;
+      color: #fff;
+    }
   }
 
   &__fav {

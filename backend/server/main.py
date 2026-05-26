@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from server.config import get_settings
 from server.database import engine, Base
-from server.routers import auth, ingredients, recipes, cooking_logs, users, households, favorites
+from server.routers import auth, ingredients, recipes, cooking_logs, users, households, favorites, upload
 from server.tasks.scheduler import scheduler
 
 settings = get_settings()
@@ -28,6 +28,7 @@ app.include_router(cooking_logs.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(households.router, prefix="/api/v1")
 app.include_router(favorites.router, prefix="/api/v1")
+app.include_router(upload.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

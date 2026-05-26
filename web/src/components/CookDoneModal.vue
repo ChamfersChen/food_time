@@ -47,9 +47,20 @@
 
       <view class="cook-done-modal__section">
         <text class="cook-done-modal__label">上传成品照片</text>
-        <view class="cook-done-modal__upload" @tap="choosePhoto">
-          <text v-if="!photoUrl" class="cook-done-modal__upload-icon">＋</text>
-          <image v-else class="cook-done-modal__photo" :src="photoUrl" mode="aspectFill" />
+        <view class="cook-done-modal__photos">
+          <view
+            v-for="(url, idx) in photoUrls"
+            :key="idx"
+            class="cook-done-modal__photo-item"
+          >
+            <image class="cook-done-modal__photo-img" :src="url" mode="aspectFill" />
+            <view class="cook-done-modal__photo-del" @tap="removePhoto(idx)">
+              <text class="cook-done-modal__photo-del-icon">×</text>
+            </view>
+          </view>
+          <view v-if="photoUrls.length < 6" class="cook-done-modal__upload" @tap="choosePhotos">
+            <text class="cook-done-modal__upload-icon">＋</text>
+          </view>
         </view>
       </view>
 
@@ -62,6 +73,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { upload } from '@/api/request'
 
 const MOODS = [
   { value: 'satisfied', emoji: '😊', label: '满足' },
@@ -74,25 +86,41 @@ const emit = defineEmits(['close', 'submit'])
 const rating = ref(0)
 const selectedMood = ref('')
 const note = ref('')
-const photoUrl = ref('')
+const photoUrls = ref([])
 const moods = MOODS
+const uploading = ref(false)
 
-function choosePhoto() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    success: (res) => {
-      photoUrl.value = res.tempFilePaths[0]
-    },
+async function choosePhotos() {
+  const res = await new Promise((resolve, reject) => {
+    uni.chooseImage({ count: 6 - photoUrls.value.length, sizeType: ['compressed'], success: resolve, fail: reject })
   })
+  if (!res?.tempFilePaths?.length) return
+  uploading.value = true
+  uni.showLoading({ title: '上传中...' })
+  try {
+    for (const tempFile of res.tempFilePaths) {
+      const result = await upload('/upload', tempFile, 'file')
+      photoUrls.value.push(result.url)
+    }
+  } catch {
+    uni.showToast({ title: '图片上传失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+    uploading.value = false
+  }
+}
+
+function removePhoto(idx) {
+  photoUrls.value.splice(idx, 1)
 }
 
 function onSubmit() {
+  if (!rating.value) return uni.showToast({ title: '请给这道菜打个分', icon: 'none' })
   emit('submit', {
     rating: rating.value,
     mood: selectedMood.value,
     note: note.value,
-    photo_url: photoUrl.value,
+    photo_urls: photoUrls.value,
   })
 }
 </script>
@@ -207,6 +235,44 @@ function onSubmit() {
     border: 1rpx solid $color-border;
   }
 
+  &__photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+  }
+
+  &__photo-item {
+    position: relative;
+    width: 160rpx;
+    height: 160rpx;
+    border-radius: 16rpx;
+    overflow: hidden;
+  }
+
+  &__photo-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__photo-del {
+    position: absolute;
+    top: 4rpx;
+    right: 4rpx;
+    width: 36rpx;
+    height: 36rpx;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__photo-del-icon {
+    font-size: 24rpx;
+    color: #fff;
+    line-height: 1;
+  }
+
   &__upload {
     width: 160rpx;
     height: 160rpx;
@@ -217,16 +283,12 @@ function onSubmit() {
     justify-content: center;
     background-color: $color-bg;
     overflow: hidden;
+    flex-shrink: 0;
   }
 
   &__upload-icon {
     font-size: 48rpx;
     color: $color-text-3;
-  }
-
-  &__photo {
-    width: 100%;
-    height: 100%;
   }
 
   &__btn {

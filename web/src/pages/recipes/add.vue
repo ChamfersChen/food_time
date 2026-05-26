@@ -192,6 +192,7 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useRecipesStore } from '@/stores/recipes'
+import { upload } from '@/api/request'
 
 const store = useRecipesStore()
 
@@ -240,14 +241,24 @@ onLoad((options) => {
   }
 })
 
-function chooseCover() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    success: (res) => {
-      form.value.cover_url = res.tempFilePaths[0]
-    },
-  })
+async function chooseCover() {
+  try {
+    const res = await new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        success: resolve,
+        fail: reject,
+      })
+    })
+    const tempFile = res.tempFilePaths[0]
+    uni.showLoading({ title: '上传封面...' })
+    const result = await upload('/upload', tempFile, 'file')
+    form.value.cover_url = result.url
+    uni.hideLoading()
+  } catch {
+    uni.hideLoading()
+  }
 }
 
 function addIngredient() {
@@ -279,7 +290,7 @@ async function onSubmit() {
     difficulty: form.value.difficulty,
     description: form.value.description.trim(),
     ingredients: form.value.ingredients.filter(i => i.name.trim()),
-    steps: form.value.steps.filter(s => s.trim()),
+    steps: form.value.steps.filter(s => s.trim()).map(s => ({ desc: s })),
   }
 
   if (isImport.value) {
