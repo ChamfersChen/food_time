@@ -15,18 +15,12 @@ async def get_ingredients(
     freshness: str | None = None,
     search: str | None = None,
     is_consumed: bool | None = None,
-    is_deleted: bool | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> tuple[list[Ingredient], int]:
     query = select(Ingredient).where(
         Ingredient.household_id == household_id,
     )
-
-    if is_deleted is not None:
-        query = query.where(Ingredient.is_deleted == is_deleted)
-    else:
-        query = query.where(Ingredient.is_deleted == False)
 
     if is_consumed is not None:
         query = query.where(Ingredient.is_consumed == is_consumed)
@@ -45,10 +39,6 @@ async def get_ingredients(
     count_query = select(func.count()).select_from(Ingredient).where(
         Ingredient.household_id == household_id,
     )
-    if is_deleted is not None:
-        count_query = count_query.where(Ingredient.is_deleted == is_deleted)
-    else:
-        count_query = count_query.where(Ingredient.is_deleted == False)
     if is_consumed is not None:
         count_query = count_query.where(Ingredient.is_consumed == is_consumed)
     else:
@@ -72,7 +62,6 @@ async def get_expiring_ingredients(db: AsyncSession, household_id: uuid.UUID, da
         select(Ingredient).where(
             Ingredient.household_id == household_id,
             Ingredient.is_consumed == False,
-            Ingredient.is_deleted == False,
             Ingredient.expire_date <= cutoff,
         ).order_by(Ingredient.expire_date.asc())
     )
@@ -128,7 +117,7 @@ async def delete_ingredient(db: AsyncSession, ingredient_id: uuid.UUID) -> bool:
     ingredient = await get_ingredient(db, ingredient_id)
     if ingredient is None:
         return False
-    ingredient.is_deleted = True
+    await db.delete(ingredient)
     await db.flush()
     return True
 
@@ -155,7 +144,7 @@ async def batch_delete(db: AsyncSession, ids: list[str]) -> int:
     for id_str in ids:
         ingredient = await get_ingredient(db, uuid.UUID(id_str))
         if ingredient:
-            ingredient.is_deleted = True
+            await db.delete(ingredient)
             count += 1
     await db.flush()
     return count

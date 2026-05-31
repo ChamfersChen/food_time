@@ -32,7 +32,6 @@ async def list_ingredients(
     freshness: str | None = None,
     search: str | None = None,
     is_consumed: bool | None = None,
-    is_deleted: bool | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -42,7 +41,7 @@ async def list_ingredients(
         raise HTTPException(status_code=400, detail="请先创建家庭冰箱")
     items, total = await get_ingredients(
         db, current_user.household_id, zone, category, freshness, search,
-        is_consumed, is_deleted, page, page_size
+        is_consumed, page, page_size
     )
     await db.commit()
     return IngredientListResponse(
@@ -85,7 +84,7 @@ async def get_ingredient_detail(
     current_user: User = Depends(get_current_user),
 ):
     item = await get_ingredient(db, ingredient_id)
-    if item is None or item.is_deleted:
+    if item is None:
         raise HTTPException(status_code=404, detail="食材不存在")
     return IngredientResponse.model_validate(item)
 

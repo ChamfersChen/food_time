@@ -10,6 +10,7 @@ from server.middleware.auth_middleware import get_current_user
 from server.utils.minio_client import upload_avatar, validate_image_ext
 from server.config import get_settings
 from datetime import date, timedelta
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["用户"])
 
@@ -46,7 +47,9 @@ async def update_preferences(
 ):
     pref_fields = {k: v for k, v in data.model_dump(exclude_unset=True).items()
                    if k in ("diet_type", "disliked", "skill_level", "flavor_pref",
-                            "notification_open", "notify_days_before")}
+                            "notification_open", "notify_days_before", "notify_hour",
+                            "notify_expiry", "notify_stock", "notify_inactive",
+                            "inactive_days", "subscribed_templates")}
     for key, value in pref_fields.items():
         setattr(current_user, key, value)
     await db.commit()
@@ -102,7 +105,6 @@ async def get_statistics(
     saved_result = await db.execute(
         select(func.count()).select_from(Ingredient).where(
             Ingredient.added_by == current_user.id,
-            Ingredient.is_deleted == False,
             Ingredient.is_consumed == False,
         )
     )
@@ -113,6 +115,21 @@ async def get_statistics(
         "streakDays": streak_days,
         "savedItems": saved_items,
     }
+
+
+class SubscribeRequest(BaseModel):
+    templates: list[str]
+
+
+@router.post("/subscribe")
+async def subscribe_templates(
+    data: SubscribeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    current_user.subscribed_templates = list(set(current_user.subscribed_templates + data.templates))
+    await db.commit()
+    return {"subscribed_templates": current_user.subscribed_templates}
 
 
 @router.post("/avatar")

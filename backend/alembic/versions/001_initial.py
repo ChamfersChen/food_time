@@ -127,7 +127,7 @@ def upgrade() -> None:
     op.create_table(
         "notifications",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("household_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("households.id"), index=True, nullable=False),
+        sa.Column("household_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("households.id"), index=True),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), index=True, nullable=False),
         sa.Column("openid", sa.String(128), nullable=False),
         sa.Column("ingredient_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("ingredients.id")),

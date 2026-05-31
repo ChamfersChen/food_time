@@ -80,9 +80,46 @@
           />
         </scroll-view>
       </view>
+
+      <view v-if="isEdit" class="page-log-add__field">
+        <text class="page-log-add__label">评论（{{ comments.length }}）</text>
+        <view v-if="comments.length" class="page-log-add__comments">
+          <view v-for="c in comments" :key="c.id" class="page-log-add__comment">
+            <image
+              class="page-log-add__comment-avatar"
+              :src="c.avatar_url || 'https://picsum.photos/100/100'"
+              mode="aspectFill"
+            />
+            <view class="page-log-add__comment-body">
+              <view class="page-log-add__comment-header">
+                <text class="page-log-add__comment-name">{{ c.nickname || '匿名' }}</text>
+                <text class="page-log-add__comment-time">{{ formatDate(c.created_at, 'MM-dd HH:mm') }}</text>
+              </view>
+              <text class="page-log-add__comment-content">{{ c.content }}</text>
+            </view>
+          </view>
+        </view>
+        <view v-else class="page-log-add__no-comments">
+          <text class="page-log-add__no-comments-text">暂无评论</text>
+        </view>
+        <view class="page-log-add__comment-input-wrap">
+          <input
+            class="page-log-add__comment-input"
+            v-model="newComment"
+            placeholder="写一条评论..."
+            :maxlength="200"
+            confirm-type="send"
+            @confirm="onSendComment"
+          />
+          <button class="page-log-add__comment-send" @tap="onSendComment" :disabled="!newComment.trim()">发送</button>
+        </view>
+      </view>
     </view>
 
     <view class="page-log-add__footer">
+      <button v-if="isEdit" class="page-log-add__delete btn-outline" @tap="onDeleteLog">
+        删除
+      </button>
       <button class="page-log-add__submit btn-primary" @tap="onSubmit" :disabled="submitting">
         {{ isEdit ? '保存修改' : '保存记录' }}
       </button>
@@ -95,6 +132,7 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useCookingLogsStore } from '@/stores/cookingLogs'
 import { formatDate } from '@/utils/date'
+import { getLogComments, createComment } from '@/api/comments'
 
 const store = useCookingLogsStore()
 
@@ -118,6 +156,9 @@ const form = ref({
   photo_urls: [],
 })
 
+const comments = ref([])
+const newComment = ref('')
+
 onLoad((options) => {
   if (options.id) {
     isEdit.value = true
@@ -140,8 +181,25 @@ async function loadLog(id) {
       note: data.note || '',
       photo_urls: data.photo_urls || [],
     }
+    try {
+      comments.value = await getLogComments(id)
+    } catch {
+      comments.value = []
+    }
   } catch (e) {
     uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+}
+
+async function onSendComment() {
+  const text = newComment.value.trim()
+  if (!text || !editId.value) return
+  try {
+    const res = await createComment({ log_id: editId.value, content: text })
+    comments.value.push(res)
+    newComment.value = ''
+  } catch {
+    uni.showToast({ title: '评论失败', icon: 'none' })
   }
 }
 
@@ -163,7 +221,11 @@ async function onSubmit() {
       rating: form.value.rating,
       note: form.value.note,
     }
-    await store.createLog(data)
+    if (isEdit.value) {
+      await store.updateLog(editId.value, data)
+    } else {
+      await store.createLog(data)
+    }
     uni.showToast({ title: '保存成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), 500)
   } catch (e) {
@@ -171,6 +233,24 @@ async function onSubmit() {
   } finally {
     submitting.value = false
   }
+}
+
+async function onDeleteLog() {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这条烹饪记录吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await store.removeLog(editId.value)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => uni.navigateBack(), 500)
+        } catch {
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    },
+  })
 }
 </script>
 
@@ -299,14 +379,28 @@ async function onSubmit() {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 100;
+    display: flex;
+    gap: 16rpx;
     padding: 20rpx $page-padding;
     padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-    background-color: rgba($color-bg, 0.9);
-    backdrop-filter: blur(10px);
+    background-color: $color-bg;
+  }
+
+  &__delete {
+    width: 160rpx;
+    height: 96rpx;
+    line-height: 96rpx;
+    border-radius: 999rpx;
+    background-color: $color-bg-card;
+    color: $color-danger;
+    border: 2rpx solid $color-border;
+    font-size: $font-sub;
+    flex-shrink: 0;
   }
 
   &__submit {
-    width: 100%;
+    flex: 1;
     height: 96rpx;
     line-height: 96rpx;
     border-radius: 999rpx;
@@ -323,6 +417,92 @@ async function onSubmit() {
     height: 200rpx;
     border-radius: 16rpx;
     background-color: $color-bg;
+    flex-shrink: 0;
+  }
+
+  &__comments {
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+  }
+
+  &__comment {
+    display: flex;
+    gap: 16rpx;
+  }
+
+  &__comment-avatar {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    background-color: $color-bg;
+    flex-shrink: 0;
+  }
+
+  &__comment-body {
+    flex: 1;
+  }
+
+  &__comment-header {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-bottom: 4rpx;
+  }
+
+  &__comment-name {
+    font-size: $font-sub;
+    font-weight: $fw-medium;
+    color: $color-text-1;
+  }
+
+  &__comment-time {
+    font-size: 20rpx;
+    color: $color-text-3;
+  }
+
+  &__comment-content {
+    font-size: $font-body;
+    color: $color-text-2;
+    line-height: 1.6;
+  }
+
+  &__no-comments {
+    padding: 24rpx 0;
+    text-align: center;
+  }
+
+  &__no-comments-text {
+    font-size: $font-sub;
+    color: $color-text-3;
+  }
+
+  &__comment-input-wrap {
+    display: flex;
+    gap: 16rpx;
+    margin-top: 16rpx;
+  }
+
+  &__comment-input {
+    flex: 1;
+    height: 72rpx;
+    padding: 0 20rpx;
+    background-color: $color-bg;
+    border-radius: 999rpx;
+    font-size: $font-body;
+    color: $color-text-1;
+    border: 2rpx solid $color-border;
+  }
+
+  &__comment-send {
+    height: 72rpx;
+    line-height: 72rpx;
+    padding: 0 28rpx;
+    border-radius: 999rpx;
+    background-color: $color-primary;
+    color: #fff;
+    font-size: $font-sub;
+    border: none;
     flex-shrink: 0;
   }
 }

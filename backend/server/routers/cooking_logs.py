@@ -24,7 +24,7 @@ async def list_cooking_logs(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = await get_cooking_logs(db, current_user.id, page, page_size)
+    items, total = await get_cooking_logs(db, user_id=current_user.id, page=page, page_size=page_size)
     await db.commit()
     return {
         "list": [CookingLogResponse.model_validate(i) for i in items],
@@ -69,6 +69,77 @@ async def logs_by_date(
     items = list(result.scalars().all())
     await db.commit()
     return {"list": [CookingLogResponse.model_validate(i) for i in items], "total": len(items)}
+
+
+@router.get("/household", response_model=dict)
+async def list_household_logs(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="未加入家庭冰箱")
+    items, total = await get_cooking_logs(db, household_id=current_user.household_id, page=page, page_size=page_size)
+    await db.commit()
+    return {
+        "list": [CookingLogResponse.model_validate(i) for i in items],
+        "total": total,
+    }
+
+
+@router.put("/{log_id}", response_model=CookingLogResponse)
+async def update_log(
+    log_id: uuid.UUID,
+    data: CookingLogCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.user_id == current_user.id,
+        )
+    )
+    log = result.scalar_one_or_none()
+    if log is None:
+        raise HTTPException(status_code=404, detail="烹饪记录不存在")
+
+    log.recipe_name = data.recipe_name
+    if data.cooked_at:
+        log.cooked_at = data.cooked_at
+    if data.duration is not None:
+        log.duration = data.duration
+    if data.rating is not None:
+        log.rating = data.rating
+    if data.note is not None:
+        log.note = data.note
+    if data.photo_urls:
+        log.photo_urls = data.photo_urls
+
+    await db.commit()
+    await db.refresh(log)
+    return CookingLogResponse.model_validate(log)
+
+
+@router.delete("/{log_id}")
+async def delete_log(
+    log_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(CookingLog).where(
+            CookingLog.id == log_id,
+            CookingLog.user_id == current_user.id,
+        )
+    )
+    log = result.scalar_one_or_none()
+    if log is None:
+        raise HTTPException(status_code=404, detail="烹饪记录不存在")
+    await db.delete(log)
+    await db.commit()
+    return {"code": 0, "message": "删除成功"}
 
 
 @router.get("/{log_id}", response_model=CookingLogResponse)

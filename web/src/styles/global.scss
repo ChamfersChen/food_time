@@ -95,6 +95,11 @@ image {
     background-color: rgba($color-sage, 0.3);
     color: #4b6f0d;
   }
+
+  &--meal {
+    background-color: rgba($color-warn, 0.12);
+    color: #b8860b;
+  }
 }
 
 /* 安全区域 */

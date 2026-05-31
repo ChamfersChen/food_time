@@ -49,6 +49,7 @@ class RecipeResponse(BaseModel):
     steps: list[dict] = []
     source: str
     author_id: Optional[uuid.UUID] = None
+    household_id: Optional[uuid.UUID] = None
     is_public: bool
     rating_avg: float = 0
     rating_count: int = 0

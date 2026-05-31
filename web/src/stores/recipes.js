@@ -10,6 +10,7 @@ import {
   createRecipe,
   updateRecipe,
   importRecipe,
+  deleteRecipe,
 } from '@/api/recipes'
 
 const WARM_MESSAGES = [
@@ -22,12 +23,9 @@ const WARM_MESSAGES = [
 
 const RECIPE_TAGS = [
   { value: '', label: '全部' },
-  { value: '家常', label: '家常' },
-  // { value: '快手', label: '快手' },
-  { value: '低卡', label: '低卡' },
-  { value: '汤类', label: '汤类' },
   { value: '早餐', label: '早餐' },
-  { value: '下饭', label: '下饭' },
+  { value: '午餐', label: '午餐' },
+  { value: '晚餐', label: '晚餐' },
 ]
 
 export const useRecipesStore = defineStore('recipes', () => {
@@ -141,6 +139,14 @@ export const useRecipesStore = defineStore('recipes', () => {
     return res
   }
 
+  async function removeRecipe(id) {
+    await deleteRecipe(id)
+    recipeList.value = recipeList.value.filter(r => r.id !== id)
+    if (currentRecipe.value?.id === id) {
+      currentRecipe.value = null
+    }
+  }
+
   function refreshWarmMessage() {
     warmMessage.value = WARM_MESSAGES[Math.floor(Math.random() * WARM_MESSAGES.length)]
   }
@@ -150,6 +156,6 @@ export const useRecipesStore = defineStore('recipes', () => {
     warmMessage, WARM_MESSAGES, RECIPE_TAGS,
     filteredList,
     fetchRecommended, fetchList, fetchDetail, fetchRandom, search, toggleFav, refreshWarmMessage,
-    createRecipe: addRecipe, importFromLink: addFromLink, editRecipe,
+    createRecipe: addRecipe, importFromLink: addFromLink, editRecipe, removeRecipe,
   }
 })

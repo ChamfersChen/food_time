@@ -1,4 +1,4 @@
-import { get, post, put } from './request'
+import { get, post, put, del } from './request'
 
 export function getRecipes(params) {
   return get('/recipes', params)
@@ -34,4 +34,8 @@ export function updateRecipe(id, data) {
 
 export function importRecipe(data) {
   return post('/recipes/import', data)
+}
+
+export function deleteRecipe(id) {
+  return del(`/recipes/${id}`)
 }

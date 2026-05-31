@@ -6,6 +6,7 @@ from server.models.recipe import Recipe
 from server.models.cooking_log import CookingLog
 from server.models.favorite import UserFavorite
 from server.models.notification import Notification
+from server.models.comment import CookingLogComment
 
 __all__ = [
     "TimestampMixin",
@@ -16,4 +17,5 @@ __all__ = [
     "CookingLog",
     "UserFavorite",
     "Notification",
+    "CookingLogComment",
 ]

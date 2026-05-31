@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getCookingLogs, getCookingLog, createCookingLog } from '@/api/cooking_logs'
+import { getCookingLogs, getCookingLog, createCookingLog, updateCookingLog, deleteCookingLog } from '@/api/cooking_logs'
 import { groupLogsByDate } from '@/utils/date'
 
 export const useCookingLogsStore = defineStore('cookingLogs', () => {
@@ -41,9 +41,29 @@ export const useCookingLogsStore = defineStore('cookingLogs', () => {
     return res
   }
 
+  async function updateLog(id, data) {
+    const res = await updateCookingLog(id, data)
+    const idx = logs.value.findIndex(l => l.id === id)
+    if (idx !== -1) {
+      logs.value[idx] = { ...logs.value[idx], ...res }
+    }
+    if (currentLog.value?.id === id) {
+      currentLog.value = { ...currentLog.value, ...res }
+    }
+    return res
+  }
+
+  async function removeLog(id) {
+    await deleteCookingLog(id)
+    logs.value = logs.value.filter(l => l.id !== id)
+    if (currentLog.value?.id === id) {
+      currentLog.value = null
+    }
+  }
+
   return {
     logs, loading, currentLog,
     groupedLogs, totalMeals,
-    fetchLogs, fetchLog, createLog,
+    fetchLogs, fetchLog, createLog, updateLog, removeLog,
   }
 })

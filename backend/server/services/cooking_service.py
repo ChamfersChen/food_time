@@ -11,20 +11,28 @@ from server.models import User
 
 async def get_cooking_logs(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: uuid.UUID | None = None,
+    household_id: uuid.UUID | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> tuple[list[CookingLog], int]:
     from sqlalchemy import func
 
+    if household_id:
+        cond = CookingLog.household_id == household_id
+    elif user_id:
+        cond = CookingLog.user_id == user_id
+    else:
+        return [], 0
+
     total_result = await db.execute(
-        select(func.count()).select_from(CookingLog).where(CookingLog.user_id == user_id)
+        select(func.count()).select_from(CookingLog).where(cond)
     )
     total = total_result.scalar() or 0
 
     result = await db.execute(
         select(CookingLog)
-        .where(CookingLog.user_id == user_id)
+        .where(cond)
         .order_by(CookingLog.cooked_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)

@@ -13,7 +13,6 @@ async def update_freshness_job():
             update(Ingredient)
             .where(
                 Ingredient.is_consumed == False,
-                Ingredient.is_deleted == False,
             )
             .values(
                 freshness=case(

@@ -1,13 +1,19 @@
 import uuid
 import string
 import random
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from server.database import get_db
 from server.models.user import User
 from server.models.household import Household
 from server.middleware.auth_middleware import get_current_user
+from pydantic import BaseModel
+
+
+class JoinRequest(BaseModel):
+    invite_code: str
+
 
 router = APIRouter(prefix="/households", tags=["家庭"])
 
@@ -78,12 +84,12 @@ async def get_current_household(
 
 @router.post("/join")
 async def join_household(
-    invite_code: str,
+    data: JoinRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Household).where(Household.invite_code == invite_code)
+        select(Household).where(Household.invite_code == data.invite_code)
     )
     household = result.scalar_one_or_none()
     if not household:
@@ -94,6 +100,63 @@ async def join_household(
     return {"code": 0, "message": "加入成功", "household_id": str(household.id)}
 
 
+@router.post("/regenerate-invite")
+async def regenerate_invite(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="未加入家庭冰箱")
+
+    result = await db.execute(
+        select(Household).where(Household.id == current_user.household_id)
+    )
+    household = result.scalar_one_or_none()
+    if not household:
+        raise HTTPException(status_code=404, detail="家庭冰箱不存在")
+
+    if household.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="仅房主可以重新生成邀请码")
+
+    household.invite_code = "".join(random.choices(string.digits, k=6))
+    await db.commit()
+    return {"invite_code": household.invite_code}
+
+
+@router.delete("/members/{user_id}")
+async def remove_member(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        raise HTTPException(status_code=400, detail="未加入家庭冰箱")
+
+    result = await db.execute(
+        select(Household).where(Household.id == current_user.household_id)
+    )
+    household = result.scalar_one_or_none()
+    if not household:
+        raise HTTPException(status_code=404, detail="家庭冰箱不存在")
+
+    if household.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="仅房主可以移除成员")
+
+    member_result = await db.execute(
+        select(User).where(User.id == user_id, User.household_id == household.id)
+    )
+    member = member_result.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="成员不存在")
+
+    if member.id == household.owner_id:
+        raise HTTPException(status_code=400, detail="不能移除房主本人")
+
+    member.household_id = None
+    await db.commit()
+    return {"code": 0, "message": "已移除成员"}
+
+
 @router.delete("/leave")
 async def leave_household(
     db: AsyncSession = Depends(get_db),
@@ -101,6 +164,13 @@ async def leave_household(
 ):
     if not current_user.household_id:
         raise HTTPException(status_code=400, detail="未加入家庭冰箱")
+
+    result = await db.execute(
+        select(Household).where(Household.id == current_user.household_id)
+    )
+    household = result.scalar_one_or_none()
+    if household and household.owner_id == current_user.id:
+        raise HTTPException(status_code=400, detail="房主不能退出，请转让房主身份或解散家庭")
 
     current_user.household_id = None
     await db.commit()

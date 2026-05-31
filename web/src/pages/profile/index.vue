@@ -44,21 +44,6 @@
 
       <view class="page-profile__divider" />
 
-      <view class="page-profile__item" @tap="goDataSync">
-        <view class="page-profile__item-left">
-          <view class="page-profile__item-icon">
-            <text>🔄</text>
-          </view>
-          <text class="page-profile__item-text">数据同步</text>
-        </view>
-        <view class="page-profile__item-right">
-          <text class="page-profile__item-status">已连接</text>
-          <text class="page-profile__item-arrow">›</text>
-        </view>
-      </view>
-
-      <view class="page-profile__divider" />
-
       <view class="page-profile__item" @tap="goFamilyShare">
         <view class="page-profile__item-left">
           <view class="page-profile__item-icon">
@@ -92,13 +77,9 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
-import { uploadAvatar as uploadAvatarApi } from '@/api/users'
-import { setUserInfo } from '@/utils/storage'
-
 
 const userStore = useUserStore()
 const stats = ref({ totalMeals: 0, streakDays: 0 })
-const uploading = ref(false)
 
 const nickname = computed(() => userStore.nickname)
 const avatarUrl = computed(() => userStore.avatarUrl)
@@ -119,42 +100,16 @@ const preferenceTags = computed(() => {
   return tags.length ? tags : ['🍽 美食爱好者']
 })
 
-async function goEditProfile() {
-  if (uploading.value) return
-  try {
-    const res = await new Promise((resolve, reject) => {
-      uni.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        success: resolve,
-        fail: reject,
-      })
-    })
-    const tempFile = res.tempFilePaths[0]
-    uploading.value = true
-    uni.showLoading({ title: '上传中...' })
-    const result = await uploadAvatarApi(tempFile)
-    userStore.userInfo.avatar_url = result.avatar_url
-    setUserInfo({ ...userStore.userInfo })
-    uni.hideLoading()
-    uni.showToast({ title: '头像已更新', icon: 'success' })
-  } catch {
-    uni.hideLoading()
-  } finally {
-    uploading.value = false
-  }
+function goEditProfile() {
+  uni.navigateTo({ url: '/pages/profile/edit' })
 }
 
 function goNotificationSettings() {
-  // TODO: navigate to notification settings
-}
-
-function goDataSync() {
-  // TODO: navigate to data sync
+  uni.navigateTo({ url: '/pages/profile/notification' })
 }
 
 function goFamilyShare() {
-  // TODO: navigate to family share
+  uni.navigateTo({ url: '/pages/profile/family' })
 }
 
 function goAIPreferences() {

@@ -23,6 +23,7 @@ class Recipe(Base):
     steps: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     source: Mapped[str] = mapped_column(String(16), index=True, default="system", nullable=False)
     author_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    household_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("households.id"), index=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     rating_avg: Mapped[float] = mapped_column(Float, default=0, nullable=False)
     rating_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

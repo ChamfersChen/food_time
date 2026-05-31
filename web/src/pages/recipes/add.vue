@@ -73,6 +73,21 @@
           </view>
         </view>
 
+        <view class="page-add-recipe__field">
+          <text class="page-add-recipe__label">用餐类型</text>
+          <view class="page-add-recipe__meal-grid">
+            <view
+              v-for="m in MEAL_TYPES"
+              :key="m.value"
+              class="page-add-recipe__meal-item"
+              :class="{ 'page-add-recipe__meal-item--active': mealType === m.value }"
+              @tap="mealType = m.value"
+            >
+              <text class="page-add-recipe__meal-label">{{ m.label }}</text>
+            </view>
+          </view>
+        </view>
+
         <view class="page-add-recipe__row">
           <view class="page-add-recipe__field page-add-recipe__field--half">
             <text class="page-add-recipe__label">烹饪时间(分钟)</text>
@@ -124,17 +139,28 @@
           >
             <view class="page-add-recipe__input-wrap page-add-recipe__input-wrap--ing-name">
               <input
-                class="page-add-recipe__input"
+                class="page-add-recipe__input page-add-recipe__input--ingredient-name"
                 v-model="ing.name"
                 placeholder="食材名称"
               />
             </view>
-            <view class="page-add-recipe__input-wrap page-add-recipe__input-wrap--ing-amount">
+            <view class="page-add-recipe__qty-group">
+              <view class="page-add-recipe__stepper" @tap="onQtyDown(idx)">
+                <text class="page-add-recipe__stepper-icon">−</text>
+              </view>
               <input
-                class="page-add-recipe__input"
-                v-model="ing.amount"
-                placeholder="用量"
+                class="page-add-recipe__qty-input"
+                type="digit"
+                v-model="ing.quantity"
+                @blur="onQtyBlur(idx)"
               />
+              <view class="page-add-recipe__stepper" @tap="onQtyUp(idx)">
+                <text class="page-add-recipe__stepper-icon">+</text>
+              </view>
+            </view>
+            <view class="page-add-recipe__unit-trigger" @tap="unitPickerIndex = idx">
+              <text class="page-add-recipe__unit-text">{{ ing.unit }}</text>
+              <text class="page-add-recipe__unit-arrow">▸</text>
             </view>
             <view
               v-if="form.ingredients.length > 1"
@@ -180,9 +206,26 @@
       <view class="page-add-recipe__bottom-spacer" />
     </scroll-view>
 
+    <view v-if="unitPickerIndex >= 0" class="page-add-recipe__picker-mask" @tap="unitPickerIndex = -1">
+      <view class="page-add-recipe__picker" @tap.stop>
+        <text class="page-add-recipe__picker-title">选择单位</text>
+        <view class="page-add-recipe__picker-grid">
+          <view
+            v-for="u in UNITS"
+            :key="u"
+            class="page-add-recipe__picker-item"
+            :class="{ 'page-add-recipe__picker-item--active': form.ingredients[unitPickerIndex]?.unit === u }"
+            @tap="selectUnit(u)"
+          >
+            {{ u }}
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view class="page-add-recipe__footer">
       <button class="page-add-recipe__submit btn-primary" :disabled="submitting" @tap="onSubmit">
-        {{ submitting ? '保存中...' : '保存菜谱' }}
+        {{ submitting ? '保存中...' : isEdit ? '保存修改' : '保存菜谱' }}
       </button>
     </view>
   </view>
@@ -207,6 +250,15 @@ const CUISINES = [
   { value: '其他', label: '其他', icon: '🍽' },
 ]
 
+const MEAL_TYPES = [
+  { value: '', label: '通用' },
+  { value: '早餐', label: '早餐' },
+  { value: '午餐', label: '午餐' },
+  { value: '晚餐', label: '晚餐' },
+]
+
+const UNITS = ['克', '毫升', '个', '根', '勺', '碗', '杯', '片', '块', '条', '只', '把', '段', '瓣', '包', '盒', '颗', '粒', '束', '适量']
+
 const DIFFICULTIES = [
   { value: 'easy', label: '简单' },
   { value: 'medium', label: '中等' },
@@ -220,7 +272,11 @@ const PLATFORMS = [
 ]
 
 const isImport = ref(false)
+const isEdit = ref(false)
+const editId = ref('')
 const submitting = ref(false)
+const mealType = ref('')
+const unitPickerIndex = ref(-1)
 
 const form = ref({
   name: '',
@@ -229,7 +285,7 @@ const form = ref({
   cook_time: '',
   difficulty: 'easy',
   description: '',
-  ingredients: [{ name: '', amount: '' }],
+  ingredients: [{ name: '', quantity: 1, unit: '克' }],
   steps: [''],
   import_source: 'xiaohongshu',
   import_url: '',
@@ -239,7 +295,47 @@ onLoad((options) => {
   if (options.mode === 'import') {
     isImport.value = true
   }
+  if (options.id) {
+    isEdit.value = true
+    editId.value = options.id
+    loadRecipe(options.id)
+    uni.setNavigationBarTitle({ title: '编辑菜谱' })
+  }
 })
+
+function parseAmount(ing) {
+  if (ing.quantity !== undefined && ing.unit) {
+    return { name: ing.name, quantity: ing.quantity, unit: ing.unit }
+  }
+  const amount = ing.amount || ''
+  if (amount === '适量') return { name: ing.name, quantity: 0, unit: '适量' }
+  const match = amount.match(/^([\d.]+)\s*(.+)$/)
+  if (match) return { name: ing.name, quantity: parseFloat(match[1]), unit: match[2] }
+  return { name: ing.name, quantity: 0, unit: amount || '克' }
+}
+
+async function loadRecipe(id) {
+  try {
+    const data = await store.fetchDetail(id)
+    form.value.name = data.name || ''
+    form.value.cover_url = data.cover_url || ''
+    form.value.cuisine = data.cuisine || '家常'
+    form.value.cook_time = data.cook_time || ''
+    form.value.difficulty = data.difficulty || 'easy'
+    form.value.description = data.description || ''
+    form.value.ingredients = (data.ingredients || []).map(parseAmount)
+    if (!form.value.ingredients.length) {
+      form.value.ingredients = [{ name: '', quantity: 1, unit: '克' }]
+    }
+    form.value.steps = (data.steps || []).map(s => (typeof s === 'string' ? s : s.desc || ''))
+    if (!form.value.steps.length) {
+      form.value.steps = ['']
+    }
+    mealType.value = (data.tags || []).find(t => ['早餐', '午餐', '晚餐'].includes(t)) || ''
+  } catch (e) {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+}
 
 async function chooseCover() {
   try {
@@ -262,11 +358,37 @@ async function chooseCover() {
 }
 
 function addIngredient() {
-  form.value.ingredients.push({ name: '', amount: '' })
+  form.value.ingredients.push({ name: '', quantity: 1, unit: '克' })
 }
 
 function removeIngredient(idx) {
   form.value.ingredients.splice(idx, 1)
+}
+
+function onQtyUp(idx) {
+  const ing = form.value.ingredients[idx]
+  const step = ['个', '根', '只', '包', '盒', '颗', '粒', '束', '瓣', '片', '块', '条', '段', '勺', '碗', '杯'].includes(ing.unit) ? 1 : 10
+  ing.quantity = (parseFloat(ing.quantity) || 0) + step
+}
+
+function onQtyDown(idx) {
+  const ing = form.value.ingredients[idx]
+  const step = ['个', '根', '只', '包', '盒', '颗', '粒', '束', '瓣', '片', '块', '条', '段', '勺', '碗', '杯'].includes(ing.unit) ? 1 : 10
+  const qty = parseFloat(ing.quantity) || 0
+  ing.quantity = Math.max(0, qty - step)
+}
+
+function onQtyBlur(idx) {
+  const ing = form.value.ingredients[idx]
+  const qty = parseFloat(ing.quantity)
+  ing.quantity = isNaN(qty) || qty < 0 ? 0 : qty
+}
+
+function selectUnit(unit) {
+  if (unitPickerIndex.value >= 0) {
+    form.value.ingredients[unitPickerIndex.value].unit = unit
+    unitPickerIndex.value = -1
+  }
 }
 
 function addStep() {
@@ -285,11 +407,15 @@ async function onSubmit() {
   const payload = {
     name: form.value.name.trim(),
     cover_url: form.value.cover_url,
+    tags: mealType.value ? [mealType.value] : [],
     cuisine: form.value.cuisine,
     cook_time: Number(form.value.cook_time) || 0,
     difficulty: form.value.difficulty,
     description: form.value.description.trim(),
-    ingredients: form.value.ingredients.filter(i => i.name.trim()),
+    ingredients: form.value.ingredients.filter(i => i.name.trim()).map(i => ({
+      name: i.name.trim(),
+      amount: i.unit === '适量' ? '适量' : (parseFloat(i.quantity) ? `${parseFloat(i.quantity)}${i.unit}` : i.unit),
+    })),
     steps: form.value.steps.filter(s => s.trim()).map(s => ({ desc: s })),
   }
 
@@ -303,12 +429,16 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    if (isImport.value) {
+    if (isEdit.value) {
+      await store.editRecipe(editId.value, payload)
+      uni.showToast({ title: '保存成功', icon: 'success' })
+    } else if (isImport.value) {
       await store.importFromLink(payload)
+      uni.showToast({ title: '导入成功', icon: 'success' })
     } else {
       await store.createRecipe(payload)
+      uni.showToast({ title: '创建成功', icon: 'success' })
     }
-    uni.showToast({ title: '创建成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), 500)
   } catch {
     // error toast handled by request interceptor
@@ -388,10 +518,9 @@ async function onSubmit() {
 
     &--ing-name {
       flex: 1;
-    }
-
-    &--ing-amount {
-      width: 200rpx;
+      height: 64rpx;
+      min-height: 64rpx;
+      padding: 0 16rpx;
     }
   }
 
@@ -400,6 +529,11 @@ async function onSubmit() {
     font-size: $font-body;
     color: $color-text-1;
     height: 88rpx;
+  }
+
+  &__input--ingredient-name {
+    height: 64rpx;
+    font-size: $font-sub;
   }
 
   &__cover {
@@ -503,6 +637,37 @@ async function onSubmit() {
     color: $color-text-2;
   }
 
+  &__meal-grid {
+    display: flex;
+    gap: 16rpx;
+  }
+
+  &__meal-item {
+    flex: 1;
+    height: 72rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $color-bg-card;
+    border-radius: 16rpx;
+    border: 2rpx solid transparent;
+    box-shadow: $card-shadow;
+    font-size: $font-sub;
+    color: $color-text-2;
+    transition: all 0.2s;
+
+    &--active {
+      border-color: $color-primary;
+      background-color: rgba($color-primary, 0.08);
+      color: $color-primary;
+      font-weight: $fw-medium;
+    }
+  }
+
+  &__meal-label {
+    font-size: $font-sub;
+  }
+
   &__difficulty-group {
     display: flex;
     gap: 16rpx;
@@ -549,8 +714,123 @@ async function onSubmit() {
   &__ingredient-row {
     display: flex;
     align-items: center;
-    gap: 16rpx;
+    gap: 12rpx;
     margin-bottom: 16rpx;
+  }
+
+  &__qty-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background-color: $color-bg-card;
+    border-radius: 12rpx;
+    box-shadow: $card-shadow;
+    flex-shrink: 0;
+  }
+
+  &__stepper {
+    width: 52rpx;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12rpx;
+
+    &:active {
+      background-color: $color-bg-section;
+    }
+  }
+
+  &__stepper-icon {
+    font-size: 28rpx;
+    color: $color-primary;
+    font-weight: $fw-semibold;
+    line-height: 1;
+  }
+
+  &__qty-input {
+    width: 72rpx;
+    height: 64rpx;
+    text-align: center;
+    font-size: $font-body;
+    color: $color-text-1;
+    background-color: transparent;
+    border-left: 2rpx solid $color-bg-section;
+    border-right: 2rpx solid $color-bg-section;
+  }
+
+  &__unit-trigger {
+    display: flex;
+    align-items: center;
+    gap: 4rpx;
+    height: 64rpx;
+    padding: 0 16rpx;
+    background-color: $color-bg-card;
+    border-radius: 12rpx;
+    box-shadow: $card-shadow;
+    flex-shrink: 0;
+  }
+
+  &__unit-text {
+    font-size: $font-sub;
+    color: $color-text-2;
+    line-height: 1;
+  }
+
+  &__unit-arrow {
+    font-size: 24rpx;
+    color: $color-text-3;
+    line-height: 1;
+  }
+
+  &__picker-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  &__picker {
+    width: 100%;
+    background-color: $color-bg-card;
+    border-radius: 32rpx 32rpx 0 0;
+    padding: 40rpx $page-padding;
+    padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  }
+
+  &__picker-title {
+    display: block;
+    font-size: $font-title;
+    font-weight: $fw-semibold;
+    color: $color-text-1;
+    margin-bottom: 32rpx;
+  }
+
+  &__picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16rpx;
+  }
+
+  &__picker-item {
+    text-align: center;
+    padding: 16rpx 0;
+    border-radius: 16rpx;
+    background-color: $color-bg;
+    font-size: $font-sub;
+    color: $color-text-2;
+    border: 2rpx solid transparent;
+
+    &--active {
+      border-color: $color-primary;
+      color: $color-primary;
+      background-color: rgba($color-primary, 0.08);
+    }
   }
 
   &__step-row {
@@ -585,8 +865,8 @@ async function onSubmit() {
   }
 
   &__remove-btn {
-    width: 48rpx;
-    height: 48rpx;
+    width: 44rpx;
+    height: 44rpx;
     border-radius: 50%;
     background-color: $color-bg-section;
     display: flex;
@@ -598,6 +878,7 @@ async function onSubmit() {
   &__remove-icon {
     font-size: 20rpx;
     color: $color-text-3;
+    line-height: 1;
   }
 
   &__bottom-spacer {
@@ -609,9 +890,10 @@ async function onSubmit() {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 100;
     padding: 20rpx $page-padding;
     padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-    background: linear-gradient(transparent, $color-bg 30%);
+    background-color: $color-bg;
   }
 
   &__submit {

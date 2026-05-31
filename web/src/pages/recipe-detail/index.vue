@@ -20,6 +20,7 @@
 
     <view class="page-detail__main">
       <view class="page-detail__tags">
+        <text v-if="recipe.tags?.[0]" class="tag tag--meal">{{ recipe.tags[0] }}</text>
         <text class="tag tag--primary">{{ recipe.difficulty === 'easy' ? '简单' : recipe.difficulty === 'medium' ? '中等' : '困难' }}</text>
         <text v-if="recipe.cuisine" class="tag tag--sage">{{ recipe.cuisine }}</text>
       </view>
@@ -99,10 +100,13 @@
     <view class="page-detail__bottom-spacer" />
 
     <view class="page-detail__footer">
-      <view class="page-detail__footer-fav" @tap="onToggleFav">
-        <text :class="recipe.is_favorited ? 'page-detail__fav-heart--active' : ''">
-          {{ recipe.is_favorited ? '♥' : '♡' }}
-        </text>
+      <view v-if="isMyRecipe" class="page-detail__footer-actions">
+        <view class="page-detail__footer-edit" @tap="onEditRecipe">
+          <text class="page-detail__footer-edit-icon">✏️</text>
+        </view>
+        <view class="page-detail__footer-del" @tap="onDeleteRecipe">
+          <text class="page-detail__footer-del-icon">🗑️</text>
+        </view>
       </view>
       <button class="page-detail__footer-btn btn-primary" @tap="onStartCook">
         {{ isCooking ? '已完成 ✓' : '开始烹饪' }}
@@ -121,11 +125,13 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useRecipesStore } from '@/stores/recipes'
+import { useUserStore } from '@/stores/user'
 import { createCookingLog } from '@/api/cooking_logs'
 import { upload } from '@/api/request'
 import CookDoneModal from '@/components/CookDoneModal.vue'
 
 const store = useRecipesStore()
+const userStore = useUserStore()
 const recipe = ref({})
 const isCooking = ref(false)
 const showDoneModal = ref(false)
@@ -133,6 +139,7 @@ const aiSuggestion = ref('')
 
 const DIFFICULTY_MAP = { easy: '简单', medium: '中等', hard: '困难' }
 const difficultyLabel = computed(() => DIFFICULTY_MAP[recipe.value.difficulty] || '简单')
+const isMyRecipe = computed(() => recipe.value.author_id === userStore.userInfo?.id)
 
 onLoad(async (options) => {
   if (options.id) {
@@ -181,6 +188,28 @@ async function onToggleFav() {
   } catch {
     uni.showToast({ title: '操作失败', icon: 'none' })
   }
+}
+
+function onEditRecipe() {
+  uni.navigateTo({ url: `/pages/recipes/add?id=${recipe.value.id}` })
+}
+
+async function onDeleteRecipe() {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除「' + recipe.value.name + '」吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await store.removeRecipe(recipe.value.id)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => uni.navigateBack(), 500)
+        } catch {
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    },
+  })
 }
 
 function onStartCook() {
@@ -482,9 +511,8 @@ async function onCookDone(data) {
     gap: 20rpx;
     padding: 20rpx $page-padding;
     padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-    background-color: rgba($color-bg, 0.9);
-    backdrop-filter: blur(10px);
-    border-top: 1rpx solid rgba($color-border, 0.5);
+    background-color: $color-bg;
+    border-top: 1rpx solid $color-border;
     z-index: 100;
   }
 
@@ -508,6 +536,34 @@ async function onCookDone(data) {
 
   &__fav-heart--active {
     color: $color-danger !important;
+  }
+
+  &__footer-actions {
+    display: flex;
+    gap: 12rpx;
+    flex-shrink: 0;
+  }
+
+  &__footer-edit,
+  &__footer-del {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 50%;
+    border: 2rpx solid $color-border;
+    background-color: $color-bg-card;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &:active {
+      background-color: $color-bg-section;
+    }
+  }
+
+  &__footer-edit-icon,
+  &__footer-del-icon {
+    font-size: 32rpx;
   }
 
   &__footer-btn {

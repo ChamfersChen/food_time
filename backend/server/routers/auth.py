@@ -26,23 +26,21 @@ async def login(request: WechatLoginRequest, db: AsyncSession = Depends(get_db))
     )
 
 
-@router.post("/dev-login", response_model=TokenResponse)
-async def dev_login(db: AsyncSession = Depends(get_db)):
-    if settings.APP_ENV == "production":
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="开发模式登录仅在开发环境可用")
-
-    result = await db.execute(select(User).where(User.openid == "dev_test_user"))
+@router.post("/guest-login", response_model=TokenResponse)
+async def guest_login(request: WechatLoginRequest, db: AsyncSession = Depends(get_db)):
+    guest_id = request.code or "guest"
+    openid = f"guest_{guest_id}"
+    result = await db.execute(select(User).where(User.openid == openid))
     user = result.scalar_one_or_none()
 
     if user is None:
-        user = User(openid="dev_test_user", nickname="美食家" + str(random.randint(1000, 9999)))
+        nickname = f"访客{random.randint(1000,9999)}"
+        user = User(openid=openid, nickname=nickname)
         db.add(user)
         await db.flush()
-
         invite_code = "".join(random.choices(string.digits, k=6))
         household = Household(
-            name=f"{user.nickname}的冰箱",
+            name=f"{nickname}的冰箱",
             owner_id=user.id,
             invite_code=invite_code,
         )

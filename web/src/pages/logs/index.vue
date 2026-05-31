@@ -32,6 +32,7 @@
               :key="log.id"
               class="page-logs__card"
               @tap="goDetail(log)"
+              @longpress="onLongPress(log)"
             >
               <view class="page-logs__card-left">
                 <image
@@ -97,6 +98,30 @@ function goDetail(log) {
   uni.navigateTo({ url: `/pages/logs/add?id=${log.id}` })
 }
 
+function onLongPress(log) {
+  uni.showActionSheet({
+    itemList: ['删除'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        uni.showModal({
+          title: '确认删除',
+          content: '确定要删除这条烹饪记录吗？',
+          success: async (confirm) => {
+            if (confirm.confirm) {
+              try {
+                await store.removeLog(log.id)
+                uni.showToast({ title: '删除成功', icon: 'success' })
+              } catch {
+                uni.showToast({ title: '删除失败', icon: 'none' })
+              }
+            }
+          },
+        })
+      }
+    },
+  })
+}
+
 onMounted(() => {
   store.fetchLogs()
 })
@@ -109,7 +134,7 @@ onShow(() => {
 <style lang="scss" scoped>
 .page-logs {
   min-height: 100vh;
-  background-color: $color-cream;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 

@@ -49,7 +49,6 @@ class IngredientResponse(BaseModel):
     image_url: Optional[str] = None
     note: Optional[str] = None
     is_consumed: bool
-    is_deleted: bool
     created_at: datetime
     updated_at: datetime
 

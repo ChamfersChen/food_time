@@ -30,7 +30,7 @@ async def list_recipes(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = await get_recipes(db, tags, difficulty, q, page, page_size)
+    items, total = await get_recipes(db, tags, difficulty, q, page, page_size, current_user.household_id)
     recipe_responses = []
     for r in items:
         resp = RecipeResponse.model_validate(r)
@@ -112,7 +112,7 @@ async def random_recipe(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    recipe = await get_random_recipe(db)
+    recipe = await get_random_recipe(db, current_user.household_id)
     if recipe is None:
         raise HTTPException(status_code=404, detail="暂无菜谱")
     await db.commit()
@@ -148,7 +148,7 @@ async def create_recipe_api(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    recipe = await create_recipe(db, data.model_dump(), current_user.id)
+    recipe = await create_recipe(db, data.model_dump(), current_user.id, current_user.household_id)
     await db.commit()
     await db.refresh(recipe)
     return RecipeResponse.model_validate(recipe)

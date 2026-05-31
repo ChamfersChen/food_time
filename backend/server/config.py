@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     WX_APPID: str = ""
     WX_SECRET: str = ""
     WX_EXPIRY_TMPL_ID: str = ""
+    WX_STOCK_TMPL_ID: str = ""
+    WX_INACTIVE_TMPL_ID: str = ""
 
     UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE_MB: int = 10

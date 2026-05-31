@@ -1,4 +1,4 @@
-import { get, put } from './request'
+import { get, put, post } from './request'
 import { upload } from './request'
 
 export function getUserProfile() {
@@ -19,4 +19,8 @@ export function getStatistics() {
 
 export function uploadAvatar(filePath) {
   return upload('/users/avatar', filePath, 'file')
+}
+
+export function subscribeTemplates(templates) {
+  return post('/users/subscribe', { templates })
 }

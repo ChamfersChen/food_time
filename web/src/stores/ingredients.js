@@ -35,7 +35,7 @@ export const useIngredientsStore = defineStore('ingredients', () => {
   const currentZone = ref('refrigeration')
   const searchKeyword = ref('')
 
-  const notConsumed = computed(() => list.value.filter(i => !i.is_consumed && !i.is_deleted))
+  const notConsumed = computed(() => list.value.filter(i => !i.is_consumed))
 
   const expiringItems = computed(() =>
     notConsumed.value.filter(i => i.freshness === 'expiring' || i.freshness === 'expired')
@@ -85,7 +85,7 @@ export const useIngredientsStore = defineStore('ingredients', () => {
   async function fetchAll() {
     loading.value = true
     try {
-      const res = await getIngredients({ is_consumed: false, is_deleted: false })
+      const res = await getIngredients({ is_consumed: false })
       list.value = res.list || res || []
     } catch (e) {
       console.error('获取食材列表失败', e)

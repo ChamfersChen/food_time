@@ -99,6 +99,7 @@
     </view>
 
     <view class="page-add__footer">
+      <button v-if="isEdit" class="page-add__delete" @tap="onDeleteIngredient">删除</button>
       <button class="page-add__submit btn-primary" @tap="onSubmit" :disabled="submitting">
         {{ isEdit ? '保存修改' : '保存食材' }}
       </button>
@@ -200,6 +201,24 @@ function selectUnit(unit) {
 
 function onDateChange(e) {
   form.value.expire_date = e.detail.value
+}
+
+async function onDeleteIngredient() {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除「' + form.value.name + '」吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await store.removeOne(editId.value)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => uni.navigateBack(), 500)
+        } catch {
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    },
+  })
 }
 
 async function onSubmit() {
@@ -359,15 +378,16 @@ async function onSubmit() {
     border-radius: 16rpx;
     overflow: hidden;
     box-shadow: $card-shadow;
+    flex: 1;
   }
 
   &__stepper-btn {
-    width: 72rpx;
-    height: 72rpx;
+    width: 80rpx;
+    height: 80rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 32rpx;
+    font-size: 34rpx;
     color: $color-text-2;
     background-color: $color-bg-card;
 
@@ -377,26 +397,28 @@ async function onSubmit() {
   }
 
   &__stepper-input {
-    width: 96rpx;
-    height: 72rpx;
+    flex: 1;
+    height: 80rpx;
     text-align: center;
     font-size: $font-body;
     color: $color-text-1;
     border-left: 2rpx solid $color-border;
     border-right: 2rpx solid $color-border;
+    min-width: 0;
   }
 
   &__unit-selector {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 72rpx;
-    padding: 0 20rpx;
+    height: 80rpx;
+    padding: 0 24rpx;
     background-color: $color-bg-card;
     border-radius: 16rpx;
     box-shadow: $card-shadow;
     font-size: $font-body;
     color: $color-text-1;
+    flex: 1;
   }
 
   &__unit-arrow {
@@ -441,14 +463,28 @@ async function onSubmit() {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 100;
+    display: flex;
+    gap: 16rpx;
     padding: 20rpx $page-padding;
     padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-    background-color: rgba($color-bg, 0.9);
-    backdrop-filter: blur(10px);
+    background-color: $color-bg;
+  }
+
+  &__delete {
+    width: 160rpx;
+    height: 96rpx;
+    line-height: 96rpx;
+    border-radius: 999rpx;
+    background-color: $color-bg-card;
+    color: $color-danger;
+    border: 2rpx solid $color-border;
+    font-size: $font-sub;
+    flex-shrink: 0;
   }
 
   &__submit {
-    width: 100%;
+    flex: 1;
     height: 96rpx;
     line-height: 96rpx;
     border-radius: 999rpx;

@@ -12,7 +12,6 @@ async def get_active_ingredients(db: AsyncSession, household_id: uuid.UUID) -> l
         select(Ingredient).where(
             Ingredient.household_id == household_id,
             Ingredient.is_consumed == False,
-            Ingredient.is_deleted == False,
         )
     )
     return list(result.scalars().all())

@@ -140,7 +140,7 @@ onShow(() => {
 <style lang="scss" scoped>
 .page-fridge {
   min-height: 100vh;
-  background-color: $color-cream;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 

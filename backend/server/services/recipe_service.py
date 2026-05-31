@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from server.models.recipe import Recipe
 from server.models.user import User
 
@@ -12,8 +12,16 @@ async def get_recipes(
     q: str | None = None,
     page: int = 1,
     page_size: int = 20,
+    household_id: uuid.UUID | None = None,
 ) -> tuple[list[Recipe], int]:
-    query = select(Recipe).where(Recipe.is_public == True)
+    query = select(Recipe).where(
+        Recipe.is_public == True
+    )
+
+    if household_id:
+        query = query.where(
+            (Recipe.source != "user") | (Recipe.household_id == household_id)
+        )
 
     if tags:
         tag_list = [t.strip() for t in tags.split(",")]
@@ -45,7 +53,8 @@ async def get_recipe(db: AsyncSession, recipe_id: uuid.UUID) -> Recipe | None:
     return recipe
 
 
-async def create_recipe(db: AsyncSession, data: dict, author_id: uuid.UUID) -> Recipe:
+async def create_recipe(db: AsyncSession, data: dict, author_id: uuid.UUID, household_id: uuid.UUID | None = None) -> Recipe:
+    author = await db.get(User, author_id)
     recipe = Recipe(
         name=data["name"],
         description=data.get("description"),
@@ -60,6 +69,7 @@ async def create_recipe(db: AsyncSession, data: dict, author_id: uuid.UUID) -> R
         steps=data.get("steps", []),
         source="user",
         author_id=author_id,
+        household_id=household_id or (author.household_id if author else None),
         is_public=data.get("is_public", True),
     )
     db.add(recipe)
@@ -84,14 +94,26 @@ async def delete_recipe(db: AsyncSession, recipe_id: uuid.UUID) -> bool:
     recipe = await get_recipe(db, recipe_id)
     if recipe is None:
         return False
+    from server.models.cooking_log import CookingLog
+    await db.execute(
+        update(CookingLog)
+        .where(CookingLog.recipe_id == recipe_id)
+        .values(recipe_id=None)
+    )
     await db.delete(recipe)
     await db.flush()
     return True
 
 
-async def get_random_recipe(db: AsyncSession) -> Recipe | None:
+async def get_random_recipe(db: AsyncSession, household_id: uuid.UUID | None = None) -> Recipe | None:
     from sqlalchemy.sql.expression import func as sqlfunc
-    result = await db.execute(
-        select(Recipe).where(Recipe.is_public == True).order_by(sqlfunc.random()).limit(1)
-    )
+
+    query = select(Recipe).where(Recipe.is_public == True)
+
+    if household_id:
+        query = query.where(
+            (Recipe.source != "user") | (Recipe.household_id == household_id)
+        )
+
+    result = await db.execute(query.order_by(sqlfunc.random()).limit(1))
     return result.scalar_one_or_none()
