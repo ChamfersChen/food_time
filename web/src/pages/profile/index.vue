@@ -25,9 +25,9 @@
         <text class="page-profile__stat-num">{{ stats.totalMeals }}</text>
         <text class="page-profile__stat-label">已记录餐食</text>
       </view>
-      <view class="page-profile__stat card">
+      <view class="page-profile__stat card" @tap="goCalendar">
         <text class="page-profile__stat-num">{{ stats.streakDays }}</text>
-        <text class="page-profile__stat-label">连续打卡(天)</text>
+        <text class="page-profile__stat-label">连续打卡天数</text>
       </view>
     </view>
 
@@ -68,7 +68,7 @@
     </view>
 
     <view class="page-profile__footer">
-      <text class="page-profile__version">食光机 v1.0.0</text>
+      <text class="page-profile__version">小厨小记 v1.0.0</text>
     </view>
   </view>
 </template>
@@ -114,6 +114,10 @@ function goFamilyShare() {
 
 function goAIPreferences() {
   // TODO: navigate to AI preferences
+}
+
+function goCalendar() {
+  uni.navigateTo({ url: '/pages/profile/calendar' })
 }
 
 onShow(async () => {

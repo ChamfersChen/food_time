@@ -1,5 +1,5 @@
 {
-  "name": "食光机",
+  "name": "小厨小记",
   "appid": "",
   "description": "别让食材辜负时光",
   "versionName": "1.0.0",
@@ -28,7 +28,7 @@
     }
   },
   "h5": {
-    "title": "食光机",
+    "title": "小厨小记",
     "router": {
       "mode": "hash"
     }

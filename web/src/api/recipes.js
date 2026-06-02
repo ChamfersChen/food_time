@@ -39,3 +39,7 @@ export function importRecipe(data) {
 export function deleteRecipe(id) {
   return del(`/recipes/${id}`)
 }
+
+export function checkRecipeIngredients(id) {
+  return get(`/recipes/${id}/ingredient-check`)
+}

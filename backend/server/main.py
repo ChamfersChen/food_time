@@ -8,7 +8,7 @@ from server.tasks.scheduler import scheduler
 settings = get_settings()
 
 app = FastAPI(
-    title="食光机 API",
+    title="小厨小记 API",
     description="别让食材辜负时光",
     version="1.0.0",
 )

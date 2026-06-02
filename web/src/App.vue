@@ -18,7 +18,7 @@ function getDeviceId() {
 }
 
 onLaunch(async () => {
-  console.log('食光机 App Launch')
+  console.log('小厨小记 App Launch')
   const userStore = useUserStore()
 
   if (!userStore.isLoggedIn) {

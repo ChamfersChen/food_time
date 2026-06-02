@@ -114,3 +114,74 @@ async def get_recommendations(
 
     scored.sort(key=lambda x: x["score"], reverse=True)
     return scored[:limit]
+
+
+def _normalize(s: str) -> str:
+    return s.strip().lower()
+
+
+async def check_recipe_ingredients(
+    db: AsyncSession,
+    recipe: Recipe,
+    household_id: uuid.UUID,
+) -> list[dict]:
+    """For each recipe ingredient, check availability in the household fridge."""
+    fridge_ings = await get_active_ingredients(db, household_id)
+    fridge_map: dict[str, tuple[float, str]] = {}
+    for fi in fridge_ings:
+        key = _normalize(fi.name)
+        fridge_map[key] = (fi.quantity, fi.unit)
+
+    import re as _re
+
+    result = []
+    for ri in recipe.ingredients or []:
+        name = ri.get("name", "")
+        qty = ri.get("quantity")
+        unit = ri.get("unit")
+        if qty is None or unit is None:
+            amount = ri.get("amount", "")
+            if amount == "适量":
+                qty, unit = 0, "适量"
+            else:
+                m = _re.match(r"^([\d.]+)\s*(.+)$", amount)
+                if m:
+                    qty, unit = float(m.group(1)), m.group(2)
+                else:
+                    qty, unit = 0, amount or "克"
+        else:
+            qty = float(qty) if qty else 0
+        key = _normalize(name)
+
+        in_fridge = False
+        sufficient = False
+        matched_name = None
+        matched_qty = 0.0
+
+        if key in fridge_map:
+            in_fridge = True
+            matched_qty, matched_unit = fridge_map[key]
+            if matched_qty >= qty:
+                sufficient = True
+            matched_name = name
+        else:
+            for fk, (fq, fu) in fridge_map.items():
+                if key in fk or fk in key:
+                    in_fridge = True
+                    matched_qty = fq
+                    if fq >= qty:
+                        sufficient = True
+                    matched_name = fk
+                    break
+
+        result.append({
+            "name": name,
+            "quantity": qty,
+            "unit": unit,
+            "inFridge": in_fridge,
+            "sufficient": sufficient,
+            "matched_qty": matched_qty,
+            "matched_name": matched_name,
+        })
+
+    return result

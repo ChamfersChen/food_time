@@ -82,7 +82,6 @@ async def get_statistics(
     total_meals_result = await db.execute(
         select(func.count()).select_from(CookingLog).where(
             CookingLog.user_id == current_user.id,
-            CookingLog.cooked_at >= month_start,
         )
     )
     total_meals = total_meals_result.scalar() or 0

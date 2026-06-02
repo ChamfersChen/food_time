@@ -414,7 +414,8 @@ async function onSubmit() {
     description: form.value.description.trim(),
     ingredients: form.value.ingredients.filter(i => i.name.trim()).map(i => ({
       name: i.name.trim(),
-      amount: i.unit === '适量' ? '适量' : (parseFloat(i.quantity) ? `${parseFloat(i.quantity)}${i.unit}` : i.unit),
+      quantity: parseFloat(i.quantity) || 0,
+      unit: i.unit || '克',
     })),
     steps: form.value.steps.filter(s => s.trim()).map(s => ({ desc: s })),
   }

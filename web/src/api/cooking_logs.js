@@ -23,3 +23,7 @@ export function deleteCookingLog(id) {
 export function getLogsByDate(date) {
   return get('/cooking-logs/by-date', { date })
 }
+
+export function getCalendarDates(year, month) {
+  return get('/cooking-logs/calendar', { year, month })
+}

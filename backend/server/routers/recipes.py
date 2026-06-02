@@ -12,7 +12,7 @@ from server.services.recipe_service import (
     delete_recipe,
     get_random_recipe,
 )
-from server.services.recommend_service import get_recommendations
+from server.services.recommend_service import get_recommendations, check_recipe_ingredients
 from server.models.favorite import UserFavorite
 from server.middleware.auth_middleware import get_current_user
 from sqlalchemy import select
@@ -140,6 +140,24 @@ async def get_recipe_detail(
     )
     resp.is_favorited = fav_result.scalar_one_or_none() is not None
     return resp
+
+
+@router.get("/{recipe_id}/ingredient-check")
+async def check_ingredients(
+    recipe_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.household_id:
+        return {"ingredients": [], "match_percent": 0}
+    recipe = await get_recipe(db, recipe_id)
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="菜谱不存在")
+    ingredients = await check_recipe_ingredients(db, recipe, current_user.household_id)
+    essential = [i for i in ingredients if i.get("is_essential", True)]
+    matched = [i for i in essential if i["inFridge"]]
+    match_percent = int(len(matched) / max(len(essential), 1) * 100)
+    return {"ingredients": ingredients, "match_percent": match_percent}
 
 
 @router.post("", response_model=RecipeResponse, status_code=201)

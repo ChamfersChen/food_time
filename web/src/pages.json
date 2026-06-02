@@ -2,7 +2,7 @@
   "pages": [
     {
       "path": "pages/home/index",
-      "style": { "navigationBarTitleText": "食光机" }
+      "style": { "navigationBarTitleText": "小厨小记" }
     },
     {
       "path": "pages/fridge/index",
@@ -47,6 +47,10 @@
     {
       "path": "pages/profile/family",
       "style": { "navigationBarTitleText": "家庭共享" }
+    },
+    {
+      "path": "pages/profile/calendar",
+      "style": { "navigationBarTitleText": "打卡日历" }
     }
   ],
   "tabBar": {

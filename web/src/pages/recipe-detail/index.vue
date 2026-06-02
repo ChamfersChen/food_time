@@ -54,21 +54,29 @@
     </view>
 
     <view class="page-detail__section card">
-      <text class="page-detail__section-title">🧺 准备食材</text>
+      <view class="page-detail__section-title-row">
+        <text class="page-detail__section-title">🧺 准备食材</text>
+        <text v-if="recipe.ingredients?.length" class="page-detail__stock-badge" :class="matchPercent === 100 ? 'page-detail__stock-badge--full' : 'page-detail__stock-badge--partial'">
+          {{ matchPercent === 100 ? '已备齐 ✓' : matchPercent > 0 ? matchPercent + '%' : '未备齐' }}
+        </text>
+      </view>
       <view
         v-for="(ing, idx) in recipe.ingredients"
         :key="idx"
         class="page-detail__ingredient"
       >
         <view class="page-detail__ingredient-info">
-          <text class="page-detail__ingredient-icon" :class="ing.inFridge ? 'page-detail__ingredient-icon--yes' : 'page-detail__ingredient-icon--no'">
-            {{ ing.inFridge ? '✓' : '✗' }}
+          <text class="page-detail__ingredient-icon" :class="ing.inFridge && ing.sufficient ? 'page-detail__ingredient-icon--yes' : 'page-detail__ingredient-icon--no'">
+            {{ ing.inFridge && ing.sufficient ? '✓' : ing.inFridge ? '△' : '✗' }}
           </text>
-          <text class="page-detail__ingredient-name" :class="{ 'page-detail__ingredient-name--dim': !ing.inFridge }">
-            {{ ing.name }}
-          </text>
+          <view class="page-detail__ingredient-name-wrap">
+            <text class="page-detail__ingredient-name" :class="{ 'page-detail__ingredient-name--dim': !ing.inFridge || !ing.sufficient }">
+              {{ ing.name }}
+            </text>
+            <text v-if="ing.inFridge && !ing.sufficient" class="page-detail__ingredient-insufficient">量不足</text>
+          </view>
         </view>
-        <text class="page-detail__ingredient-qty">{{ ing.quantity }} {{ ing.unit }}</text>
+        <text class="page-detail__ingredient-qty">{{ ing.quantity != null ? ing.quantity + ' ' + ing.unit : ing.amount }}</text>
       </view>
 
       <view v-if="aiSuggestion" class="page-detail__ai-tip">
@@ -123,10 +131,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useRecipesStore } from '@/stores/recipes'
 import { useUserStore } from '@/stores/user'
 import { createCookingLog } from '@/api/cooking_logs'
+import { checkRecipeIngredients } from '@/api/recipes'
 import { upload } from '@/api/request'
 import CookDoneModal from '@/components/CookDoneModal.vue'
 
@@ -136,6 +145,7 @@ const recipe = ref({})
 const isCooking = ref(false)
 const showDoneModal = ref(false)
 const aiSuggestion = ref('')
+const matchPercent = ref(0)
 
 const DIFFICULTY_MAP = { easy: '简单', medium: '中等', hard: '困难' }
 const difficultyLabel = computed(() => DIFFICULTY_MAP[recipe.value.difficulty] || '简单')
@@ -147,18 +157,46 @@ onLoad(async (options) => {
       const data = await store.fetchDetail(options.id)
       recipe.value = data
       uni.setNavigationBarTitle({ title: data.name || '菜谱详情' })
-      if (data.ingredients) {
-        const missingIngredients = data.ingredients.filter(i => !i.inFridge && i.is_essential)
-        if (missingIngredients.length > 0) {
-          const names = missingIngredients.map(i => i.name).join('、')
-          aiSuggestion.value = `冰箱缺少 ${names}，去超市补充一下吧 🛒`
-        }
-      }
+      await checkStock()
     } catch {
       uni.showToast({ title: '加载失败', icon: 'none' })
     }
   }
 })
+
+onShow(() => {
+  if (recipe.value.id) {
+    checkStock()
+  }
+})
+
+async function checkStock() {
+  if (!recipe.value.id || !userStore.userInfo?.id) return
+  try {
+    const res = await checkRecipeIngredients(recipe.value.id)
+    if (res.ingredients && recipe.value.ingredients) {
+      const checkMap = {}
+      res.ingredients.forEach(i => { checkMap[i.name] = i })
+      recipe.value.ingredients = recipe.value.ingredients.map(i => ({
+        ...i,
+        inFridge: checkMap[i.name]?.inFridge || false,
+        sufficient: checkMap[i.name]?.sufficient || false,
+      }))
+      const ready = recipe.value.ingredients.filter(i => i.inFridge && i.sufficient)
+      const total = recipe.value.ingredients.length
+      matchPercent.value = total ? Math.round(ready.length / total * 100) : 0
+      const missingIngredients = recipe.value.ingredients.filter(i => !i.inFridge || !i.sufficient)
+      if (missingIngredients.length > 0) {
+        const names = missingIngredients.map(i => i.name + (i.inFridge && !i.sufficient ? '(量不足)' : '')).join('、')
+        aiSuggestion.value = `冰箱缺少 ${names}，去超市补充一下吧 🛒`
+      } else if (total > 0) {
+        aiSuggestion.value = '冰箱食材已备齐，可以开始烹饪啦 🎉'
+      }
+    }
+  } catch {
+    // silently fail
+  }
+}
 
 async function onChangeCover() {
   if (!recipe.value.id) return
@@ -388,12 +426,35 @@ async function onCookDone(data) {
     margin: 24rpx $page-padding;
   }
 
+  &__section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   &__section-title {
     display: block;
     font-size: $font-title;
     font-weight: $fw-semibold;
     color: $color-text-1;
-    margin-bottom: 24rpx;
+    margin-bottom: 32rpx;
+  }
+
+  &__stock-badge {
+    font-size: $font-sub;
+    font-weight: $fw-medium;
+    padding: 4rpx 16rpx;
+    border-radius: 999rpx;
+
+    &--full {
+      background-color: rgba($color-primary, 0.1);
+      color: $color-primary;
+    }
+
+    &--partial {
+      background-color: rgba($color-warn, 0.1);
+      color: $color-warn;
+    }
   }
 
   &__ingredient {
@@ -408,6 +469,42 @@ async function onCookDone(data) {
     display: flex;
     align-items: center;
     gap: 12rpx;
+  }
+
+  &__ingredient-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+  }
+
+  &__ingredient-insufficient {
+    font-size: $font-label;
+    color: $color-warn;
+    background-color: rgba($color-warn, 0.1);
+    padding: 2rpx 10rpx;
+    border-radius: 8rpx;
+  }
+
+  &__ingredient-icon {
+    font-size: $font-sub;
+    font-weight: $fw-semibold;
+
+    &--yes {
+      color: $color-primary;
+    }
+
+    &--no {
+      color: $color-text-3;
+    }
+  }
+
+  &__ingredient-name {
+    font-size: $font-body;
+    color: $color-text-1;
+
+    &--dim {
+      color: $color-text-3;
+    }
   }
 
   &__ingredient-icon {

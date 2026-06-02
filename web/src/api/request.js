@@ -2,6 +2,7 @@
  * 统一请求封装
  * 自动注入 JWT，处理 401 跳登录，统一 toast 报错
  */
+// const BASE_URL = 'http://47.109.28.1:17890/api/v1'
 const BASE_URL = 'http://localhost:17890/api/v1'
 
 function request(options) {

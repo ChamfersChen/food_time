@@ -54,6 +54,25 @@ async def cooking_stats(
     return stats
 
 
+@router.get("/calendar", response_model=dict)
+async def calendar_dates(
+    year: int = Query(...),
+    month: int = Query(..., ge=1, le=12),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(CookingLog.cooked_at).where(
+            CookingLog.user_id == current_user.id,
+            CookingLog.cooked_at >= date(year, month, 1),
+            CookingLog.cooked_at < date(year + month // 12, month % 12 + 1, 1),
+        ).distinct()
+    )
+    dates = [row[0].isoformat() for row in result.all()]
+    await db.commit()
+    return {"dates": dates}
+
+
 @router.get("/by-date", response_model=dict)
 async def logs_by_date(
     date: date = Query(...),

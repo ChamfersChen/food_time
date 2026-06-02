@@ -8,6 +8,8 @@ WX_CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session"
 
 async def code2session(code: str) -> dict:
     async with httpx.AsyncClient(timeout=10) as client:
+        print(f"Requesting WeChat code2session with code: {code}")
+        print(f"Using appid: {settings.WX_APPID} and secret: {settings.WX_SECRET}")
         resp = await client.get(WX_CODE2SESSION_URL, params={
             "appid": settings.WX_APPID,
             "secret": settings.WX_SECRET,
