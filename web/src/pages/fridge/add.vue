@@ -10,10 +10,6 @@
             placeholder="输入食材名称"
             focus
           />
-          <view class="page-add__scan-btn" @tap="onScan">
-            <text class="page-add__scan-icon">📷</text>
-            <text class="page-add__scan-text">扫码</text>
-          </view>
         </view>
       </view>
 
@@ -128,7 +124,6 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useIngredientsStore } from '@/stores/ingredients'
-import { scanBarcode } from '@/api/auth'
 
 const store = useIngredientsStore()
 const CATEGORIES = store.CATEGORIES
@@ -156,9 +151,6 @@ onLoad((options) => {
     editId.value = options.id
     loadIngredient(options.id)
   }
-  if (options.scan) {
-    onScan()
-  }
 })
 
 async function loadIngredient(id) {
@@ -175,15 +167,6 @@ async function loadIngredient(id) {
     }
   } catch (e) {
     uni.showToast({ title: '加载失败', icon: 'none' })
-  }
-}
-
-async function onScan() {
-  try {
-    const code = await scanBarcode()
-    form.value.name = code
-  } catch {
-    // cancelled or not supported
   }
 }
 
@@ -289,25 +272,6 @@ async function onSubmit() {
     font-size: $font-body;
     color: $color-text-1;
     height: 88rpx;
-  }
-
-  &__scan-btn {
-    display: flex;
-    align-items: center;
-    gap: 6rpx;
-    padding: 8rpx 20rpx;
-    background-color: rgba($color-primary, 0.1);
-    border-radius: 999rpx;
-    margin-left: 12rpx;
-  }
-
-  &__scan-icon {
-    font-size: 28rpx;
-  }
-
-  &__scan-text {
-    font-size: $font-label;
-    color: $color-primary;
   }
 
   &__category-grid {

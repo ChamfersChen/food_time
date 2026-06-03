@@ -1,29 +1,30 @@
 <template>
   <view class="page-fridge">
-    <view class="page-fridge__search">
-      <view class="page-fridge__search-inner">
-        <text class="page-fridge__search-icon">🔍</text>
-        <input
-          class="page-fridge__search-input"
-          v-model="searchKeyword"
-          placeholder="搜索食材名称或标签..."
-          placeholder-class="page-fridge__search-placeholder"
-          confirm-type="search"
-          @confirm="onSearch"
-        />
-      </view>
-    </view>
+    <view class="page-fridge__filters">
+      <scroll-view scroll-x class="page-fridge__filters-scroll" show-scrollbar="false">
+        <view
+          v-for="zone in ZONES"
+          :key="zone.value"
+          class="page-fridge__pill page-fridge__pill--zone"
+          :class="{ 'page-fridge__pill--zone-active': currentZone === zone.value }"
+          @tap="switchZone(zone.value)"
+        >
+          <text class="page-fridge__pill-label">{{ zone.label }}</text>
+        </view>
 
-    <view class="page-fridge__zones">
-      <view
-        v-for="zone in ZONES"
-        :key="zone.value"
-        class="page-fridge__zone-tab"
-        :class="{ 'page-fridge__zone-tab--active': currentZone === zone.value }"
-        @tap="switchZone(zone.value)"
-      >
-        <text class="page-fridge__zone-label">{{ zone.label }}</text>
-      </view>
+        <view class="page-fridge__divider" />
+
+        <view
+          v-for="cat in store.CATEGORIES"
+          :key="cat.value"
+          class="page-fridge__pill page-fridge__pill--cat"
+          :class="{ 'page-fridge__pill--cat-active': currentCategory === cat.value }"
+          @tap="switchCategory(cat.value)"
+        >
+          <text class="page-fridge__pill-icon">{{ cat.icon }}</text>
+          <text class="page-fridge__pill-label">{{ cat.label }}</text>
+        </view>
+      </scroll-view>
     </view>
 
     <scroll-view class="page-fridge__list" scroll-y enable-back-to-top>
@@ -35,8 +36,8 @@
         <EmptyState
           v-else-if="filteredList.length === 0"
           type="fridge"
-          title="冰箱空空如也"
-          description="快去添加一些食材吧"
+          :title="emptyTitle"
+          :description="emptyDescription"
           button-text="添加食材"
           @action="goAdd"
         />
@@ -70,6 +71,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import FabButton from '@/components/FabButton.vue'
 
 const store = useIngredientsStore()
+
 const ZONES = [
   { value: 'all', label: '全部' },
   { value: 'refrigeration', label: '冷藏' },
@@ -78,19 +80,42 @@ const ZONES = [
 ]
 
 const currentZone = ref('all')
-const searchKeyword = ref('')
+const currentCategory = ref(store.currentFilter)
 const loading = ref(false)
 
-const notConsumed = computed(() => store.notConsumed)
 const filteredList = computed(() => store.filteredList)
+
+const emptyTitle = computed(() => {
+  if (currentCategory.value !== 'all') {
+    const cat = store.CATEGORIES.find(c => c.value === currentCategory.value)
+    return `冰箱没有${cat ? cat.label : '这类'}食物`
+  }
+  if (currentZone.value !== 'all') {
+    const zone = ZONES.find(z => z.value === currentZone.value)
+    return `冰箱没有${zone ? zone.label : '该区域'}的食物`
+  }
+  return '冰箱空空如也'
+})
+
+const emptyDescription = computed(() => {
+  if (currentCategory.value !== 'all' || currentZone.value !== 'all') {
+    return '换个分类看看吧'
+  }
+  return '快去添加一些食材吧'
+})
+
+function switchCategory(cat) {
+  currentCategory.value = cat
+  store.currentFilter = cat
+  currentZone.value = 'all'
+  store.currentZone = 'all'
+}
 
 function switchZone(zone) {
   currentZone.value = zone
   store.currentZone = zone
-}
-
-function onSearch() {
-  store.searchKeyword = searchKeyword.value
+  currentCategory.value = 'all'
+  store.currentFilter = 'all'
 }
 
 function goAdd() {
@@ -128,13 +153,25 @@ function onDelete(item) {
 }
 
 onMounted(() => {
+  applyPendingFilter()
   loading.value = true
   store.fetchAll().finally(() => { loading.value = false })
 })
 
 onShow(() => {
+  applyPendingFilter()
   store.fetchAll()
 })
+
+function applyPendingFilter() {
+  if (store.pendingCategoryFilter) {
+    currentCategory.value = store.pendingCategoryFilter
+    store.currentFilter = store.pendingCategoryFilter
+    store.pendingCategoryFilter = null
+    currentZone.value = 'all'
+    store.currentZone = 'all'
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -144,43 +181,11 @@ onShow(() => {
   display: flex;
   flex-direction: column;
 
-  &__search {
-    padding: $page-padding $page-padding 16rpx;
+  &__filters {
+    padding: 20rpx $page-padding 0;
   }
 
-  &__search-inner {
-    display: flex;
-    align-items: center;
-    height: 80rpx;
-    background-color: $color-bg-card;
-    border-radius: 999rpx;
-    padding: 0 28rpx;
-    box-shadow: $card-shadow;
-  }
-
-  &__search-icon {
-    font-size: 28rpx;
-    margin-right: 16rpx;
-  }
-
-  &__search-input {
-    flex: 1;
-    font-size: $font-body;
-    color: $color-text-1;
-    background: transparent;
-  }
-
-  &__search-placeholder {
-    color: $color-text-3;
-    font-size: $font-body;
-  }
-
-  &__zones {
-    display: flex;
-    gap: 16rpx;
-    padding: 0 $page-padding;
-    margin-bottom: 24rpx;
-    overflow-x: auto;
+  &__filters-scroll {
     white-space: nowrap;
 
     &::-webkit-scrollbar {
@@ -188,35 +193,74 @@ onShow(() => {
     }
   }
 
-  &__zone-tab {
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8rpx;
     flex-shrink: 0;
-    padding: 14rpx 32rpx;
     border-radius: 999rpx;
-    font-size: $font-sub;
     font-weight: $fw-medium;
-    color: $color-text-3;
-    background-color: $color-bg-card;
     border: 2rpx solid $color-border;
     transition: all 0.2s;
+    vertical-align: middle;
 
     &:active {
       transform: scale(0.95);
     }
 
-    &--active {
-      background-color: $color-primary;
-      color: #FFFFFF;
-      border-color: $color-primary;
-      box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+    &--zone {
+      padding: 16rpx 32rpx;
+      font-size: $font-sub;
+      color: $color-text-3;
+      background-color: $color-bg-card;
+      margin-right: 12rpx;
+
+      &-active {
+        background-color: $color-primary;
+        color: #FFFFFF;
+        border-color: $color-primary;
+        box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+      }
+    }
+
+    &--cat {
+      padding: 14rpx 26rpx;
+      font-size: $font-label;
+      color: $color-text-3;
+      background-color: $color-bg-card;
+      margin-right: 12rpx;
+
+      &-active {
+        background-color: $color-primary-light;
+        color: $color-primary;
+        border-color: $color-primary;
+      }
     }
   }
 
-  &__zone-label {
+  &__pill-icon {
+    font-size: 28rpx;
     line-height: 1;
+  }
+
+  &__pill-label {
+    line-height: 1;
+  }
+
+  &__divider {
+    display: inline-block;
+    width: 4rpx;
+    height: 32rpx;
+    background-color: $color-border;
+    border-radius: 2rpx;
+    flex-shrink: 0;
+    margin: 0 16rpx;
+    vertical-align: middle;
   }
 
   &__list {
     flex: 1;
+    margin-top: 20rpx;
   }
 
   &__list-inner {

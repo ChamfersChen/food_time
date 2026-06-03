@@ -5,28 +5,29 @@
     </view>
 
     <view class="ingredient-card__center">
-      <text class="ingredient-card__name">{{ item.name }}</text>
+      <view class="ingredient-card__top">
+        <text class="ingredient-card__name">{{ item.name }}</text>
+        <ExpiryBadge :expire-date="item.expire_date" />
+      </view>
       <text class="ingredient-card__quantity">{{ item.quantity }} {{ item.unit }}</text>
     </view>
 
     <view class="ingredient-card__right">
-      <ExpiryBadge :expire-date="item.expire_date" />
-      <view class="ingredient-card__bar-wrap">
-        <FreshnessBar :expire-date="item.expire_date" width="120rpx" />
-      </view>
+      <text class="ingredient-card__date">🛒 {{ formatDate(item.purchase_date || item.created_at) }}</text>
+      <text class="ingredient-card__date-divider">|</text>
+      <text class="ingredient-card__date">⌛ {{ formatDate(item.expire_date) }}</text>
     </view>
   </view>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import FreshnessBar from './FreshnessBar.vue'
 import ExpiryBadge from './ExpiryBadge.vue'
 import { useIngredientsStore } from '@/stores/ingredients'
 
 const CATEGORY_ICONS = {
   vegetables: '🥬', meat: '🥩', seafood: '🦐', dairy: '🥛',
-  fruit: '🍎', condiment: '🧂', beverage: '🧃', other: '📦',
+  fruit: '🍎', egg: '🥚', beverage: '🧃', other: '📦',
 }
 
 const props = defineProps({
@@ -38,6 +39,12 @@ const emit = defineEmits(['edit', 'consume', 'delete'])
 const store = useIngredientsStore()
 
 const categoryIcon = computed(() => CATEGORY_ICONS[props.item.category] || '📦')
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+}
 
 function onTap() {
   emit('edit', props.item)
@@ -92,10 +99,15 @@ function onLongPress() {
     min-width: 0;
   }
 
+  &__top {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+  }
+
   &__name {
-    display: block;
     font-size: $font-body;
-    font-weight: $fw-medium;
+    font-weight: $fw-semibold;
     color: $color-text-1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -105,19 +117,27 @@ function onLongPress() {
   &__quantity {
     display: block;
     font-size: $font-sub;
-    color: $color-text-3;
+    color: $color-text-2;
     margin-top: 4rpx;
   }
 
   &__right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 16rpx;
+    flex-shrink: 0;
     gap: 8rpx;
   }
 
-  &__bar-wrap {
-    margin-top: 4rpx;
+  &__date {
+    font-size: $font-sub;
+    color: $color-text-3;
+  }
+
+  &__date-divider {
+    font-size: $font-label;
+    color: $color-border;
   }
 }
 </style>

@@ -15,7 +15,7 @@ const CATEGORIES = [
   { value: 'seafood', label: '海鲜', icon: '🦐' },
   { value: 'dairy', label: '乳制品', icon: '🥛' },
   { value: 'fruit', label: '水果', icon: '🍎' },
-  { value: 'condiment', label: '调料', icon: '🧂' },
+  { value: 'egg', label: '蛋类', icon: '🥚' },
   { value: 'beverage', label: '饮料', icon: '🧃' },
   { value: 'other', label: '其他', icon: '📦' },
 ]
@@ -34,6 +34,7 @@ export const useIngredientsStore = defineStore('ingredients', () => {
   const currentFilter = ref('all')
   const currentZone = ref('refrigeration')
   const searchKeyword = ref('')
+  const pendingCategoryFilter = ref(null)
 
   const notConsumed = computed(() => list.value.filter(i => !i.is_consumed))
 
@@ -132,7 +133,7 @@ export const useIngredientsStore = defineStore('ingredients', () => {
   }
 
   return {
-    list, loading, currentFilter, currentZone, searchKeyword,
+    list, loading, currentFilter, currentZone, searchKeyword, pendingCategoryFilter,
     CATEGORIES, ZONES, UNITS,
     notConsumed, expiringItems, expiredItems, byZone, byCategory, categorySummary, filteredList,
     fetchAll, fetchOne, addOne, editOne, markConsumed, removeOne,

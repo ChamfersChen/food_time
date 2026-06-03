@@ -54,16 +54,14 @@
         <view
           v-for="cat in categoryList"
           :key="cat.value"
-          class="page-home__grid-item card"
+          class="page-home__grid-item"
           @tap="goFridgeCategory(cat.value)"
         >
           <view class="page-home__grid-icon-wrap" :style="{ backgroundColor: cat.bgColor }">
             <text class="page-home__grid-icon">{{ cat.icon }}</text>
           </view>
-          <view class="page-home__grid-info">
-            <text class="page-home__grid-name">{{ cat.label }}</text>
-            <text class="page-home__grid-count">{{ categorySummary[cat.value] || 0 }} 件</text>
-          </view>
+          <text class="page-home__grid-name">{{ cat.label }}</text>
+          <text class="page-home__grid-count">{{ categorySummary[cat.value] || 0 }}</text>
         </view>
       </view>
     </view>
@@ -86,8 +84,12 @@ import ExpiryBadge from '@/components/ExpiryBadge.vue'
 const CATEGORY_LIST = [
   { value: 'vegetables', label: '蔬菜', icon: '🥬', bgColor: '#E8F5F1' },
   { value: 'meat', label: '肉类', icon: '🥩', bgColor: '#FDE8E6' },
-  { value: 'beverage', label: '饮品', icon: '🧃', bgColor: '#FFF5E0' },
+  { value: 'seafood', label: '海鲜', icon: '🦐', bgColor: '#E0F0FF' },
+  { value: 'dairy', label: '乳制品', icon: '🥛', bgColor: '#FFF5E0' },
   { value: 'fruit', label: '水果', icon: '🍎', bgColor: '#FFF0E8' },
+  { value: 'egg', label: '蛋类', icon: '🥚', bgColor: '#F5E8D0' },
+  { value: 'beverage', label: '饮料', icon: '🧃', bgColor: '#E8F5F9' },
+  { value: 'other', label: '其他', icon: '📦', bgColor: '#F0F0F0' },
 ]
 
 const userStore = useUserStore()
@@ -111,7 +113,7 @@ const matchCount = computed(() =>
 )
 
 function getCategoryIcon(category) {
-  const map = { vegetables: '🥬', meat: '🥩', seafood: '🦐', dairy: '🥛', fruit: '🍎', condiment: '🧂', beverage: '🧃', other: '📦' }
+  const map = { vegetables: '🥬', meat: '🥩', seafood: '🦐', dairy: '🥛', fruit: '🍎', egg: '🥚', beverage: '🧃', other: '📦' }
   return map[category] || '📦'
 }
 
@@ -131,7 +133,10 @@ function goFridge() {
 }
 
 function goFridgeCategory(cat) {
-  uni.switchTab({ url: `/pages/fridge/index?category=${cat}` })
+  ingredientsStore.pendingCategoryFilter = cat || null
+  ingredientsStore.currentZone = 'all'
+  ingredientsStore.searchKeyword = ''
+  uni.switchTab({ url: '/pages/fridge/index' })
 }
 
 function goProfile() {
@@ -273,8 +278,48 @@ onShow(() => {
 
   &__grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20rpx;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16rpx;
+  }
+
+  &__grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20rpx 8rpx;
+    background-color: $color-bg-card;
+    border-radius: $card-radius;
+    box-shadow: $card-shadow;
+    gap: 8rpx;
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__grid-icon-wrap {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__grid-icon {
+    font-size: 36rpx;
+  }
+
+  &__grid-name {
+    font-size: $font-label;
+    color: $color-text-2;
+  }
+
+  &__grid-count {
+    font-size: $font-sub;
+    font-weight: $fw-semibold;
+    color: $color-text-1;
   }
 
   &__grid-item {
