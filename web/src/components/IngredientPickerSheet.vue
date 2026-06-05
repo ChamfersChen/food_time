@@ -283,7 +283,7 @@ function confirm() {
     justify-content: center;
     color: #fff;
     font-size: 24rpx;
-    font-weight: $fw-bold;
+    font-weight: $fw-semibold;
     transition: all 0.2s;
   }
 
