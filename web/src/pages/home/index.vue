@@ -2,7 +2,7 @@
   <view class="page-home">
     <view class="page-home__header">
       <view class="page-home__greeting">
-        <text class="page-home__greeting-text">{{ greeting }}，\n{{ nickname }}</text>
+        <text class="page-home__greeting-text">{{ greeting }}，{{ nickname }}</text>
       </view>
       <view class="page-home__avatar-wrap" @tap="goProfile">
         <image

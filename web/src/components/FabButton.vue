@@ -1,11 +1,12 @@
 <template>
   <view
     class="fab-btn"
-    :class="{ 'fab-btn--dragging': isDragging }"
+    :class="{ 'fab-btn--dragging': isDragging, 'fab-btn--longpress': isLongPressing }"
     :style="fabStyle"
     @touchstart="onTouchStart"
     @touchmove.stop.prevent="onTouchMove"
     @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
     @tap="onClick"
   >
     <text class="fab-btn__icon">{{ icon }}</text>
@@ -17,9 +18,10 @@ import { ref, computed } from 'vue'
 
 const props = defineProps({
   icon: { type: String, default: '＋' },
+  longPressDuration: { type: Number, default: 600 },
 })
 
-const emit = defineEmits(['tap'])
+const emit = defineEmits(['tap', 'longpress'])
 
 const margin = 10
 const fabRight = margin
@@ -52,9 +54,11 @@ function getInitialTop() {
 const topPos = ref(getInitialTop())
 const isDragging = ref(false)
 const isMoved = ref(false)
+const isLongPressing = ref(false)
 
 let startY = 0
 let startTop = 0
+let longPressTimer = null
 
 const fabStyle = computed(() => ({
   top: topPos.value + 'px',
@@ -72,6 +76,19 @@ function onTouchStart(e) {
   startY = e.touches[0].clientY
   startTop = topPos.value
   getScreenInfo()
+  if (longPressTimer) clearTimeout(longPressTimer)
+  if (props.longPressDuration > 0) {
+    isLongPressing.value = true
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null
+      if (isLongPressing.value && !isMoved.value) {
+        isLongPressing.value = false
+        isMoved.value = true
+        uni.vibrateShort && uni.vibrateShort({ type: 'medium' })
+        emit('longpress')
+      }
+    }, props.longPressDuration)
+  }
 }
 
 function onTouchMove(e) {
@@ -79,12 +96,22 @@ function onTouchMove(e) {
   if (Math.abs(dy) > 4) {
     isDragging.value = true
     isMoved.value = true
+    isLongPressing.value = false
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+      longPressTimer = null
+    }
   }
   topPos.value = clampPos(startTop + dy)
 }
 
 function onTouchEnd() {
   isDragging.value = false
+  isLongPressing.value = false
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
 }
 
 function onClick() {
@@ -112,6 +139,11 @@ function onClick() {
     transform: scale(1.08);
     box-shadow: 0 12rpx 36rpx rgba($color-primary, 0.4);
   }
+
+  &--longpress {
+    transform: scale(0.92);
+    box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+  }
 }
 
 .fab-btn__icon {
@@ -120,3 +152,4 @@ function onClick() {
   font-weight: $fw-medium;
 }
 </style>
+

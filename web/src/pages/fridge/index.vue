@@ -47,9 +47,14 @@
             v-for="item in filteredList"
             :key="item.id"
             :item="item"
+            :just-added="item.id === justAddedId"
+            :removing="item.id === removingId"
+            @select="goDetail"
             @edit="goEdit"
-            @consume="onConsume"
+            @consume="goDetail"
             @delete="onDelete"
+            @swipe-add="onSwipeAdd"
+            @swipe-consume="onSwipeConsume"
           />
         </view>
 
@@ -69,6 +74,7 @@ import { useIngredientsStore } from '@/stores/ingredients'
 import IngredientCard from '@/components/IngredientCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FabButton from '@/components/FabButton.vue'
+import { getStepSize } from '@/utils/ingredientUtils'
 
 const store = useIngredientsStore()
 
@@ -82,6 +88,8 @@ const ZONES = [
 const currentZone = ref('all')
 const currentCategory = ref(store.currentFilter)
 const loading = ref(false)
+const justAddedId = ref(null)
+const removingId = ref(null)
 
 const filteredList = computed(() => store.filteredList)
 
@@ -122,21 +130,12 @@ function goAdd() {
   uni.navigateTo({ url: '/pages/fridge/add' })
 }
 
-function goEdit(item) {
-  uni.navigateTo({ url: `/pages/fridge/add?id=${item.id}` })
+function goDetail(item) {
+  uni.navigateTo({ url: `/pages/fridge/detail?id=${item.id}` })
 }
 
-async function onConsume(item) {
-  uni.showModal({
-    title: '确认消耗',
-    content: `确认将「${item.name}」标记为已消耗？`,
-    success: async (res) => {
-      if (res.confirm) {
-        await store.markConsumed(item.id)
-        uni.showToast({ title: '已消耗', icon: 'success' })
-      }
-    },
-  })
+function goEdit(item) {
+  uni.navigateTo({ url: `/pages/fridge/add?id=${item.id}` })
 }
 
 function onDelete(item) {
@@ -145,11 +144,47 @@ function onDelete(item) {
     content: `确认删除「${item.name}」？`,
     success: async (res) => {
       if (res.confirm) {
-        await store.removeOne(item.id)
-        uni.showToast({ title: '已删除', icon: 'success' })
+        removingId.value = item.id
+        setTimeout(async () => {
+          try {
+            await store.removeOne(item.id)
+            uni.showToast({ title: '已删除', icon: 'success' })
+          } catch {
+            uni.showToast({ title: '删除失败', icon: 'none' })
+          } finally {
+            removingId.value = null
+          }
+        }, 300)
       }
     },
   })
+}
+
+async function onSwipeAdd(item) {
+  const n = getStepSize(item.unit)
+  try {
+    await store.addWithQuantity(item.id, n)
+    uni.showToast({ title: `已添加 ${n} ${item.unit}`, icon: 'none' })
+  } catch (e) {
+    uni.showToast({ title: '添加失败', icon: 'none' })
+  }
+}
+
+async function onSwipeConsume(item) {
+  const n = getStepSize(item.unit)
+  try {
+    const snapshot = await store.consumeWithQuantity(item.id, n)
+    if (!snapshot) return
+    if (snapshot.type === 'fully_consumed') {
+      removingId.value = item.id
+      uni.showToast({ title: '已用完 🧺', icon: 'none' })
+      setTimeout(() => { removingId.value = null }, 400)
+    } else {
+      uni.showToast({ title: `已消耗 ${n} ${item.unit}`, icon: 'none' })
+    }
+  } catch (e) {
+    uni.showToast({ title: '消耗失败', icon: 'none' })
+  }
 }
 
 onMounted(() => {
@@ -161,6 +196,7 @@ onMounted(() => {
 onShow(() => {
   applyPendingFilter()
   store.fetchAll()
+  checkJustAdded()
 })
 
 function applyPendingFilter() {
@@ -170,6 +206,17 @@ function applyPendingFilter() {
     store.pendingCategoryFilter = null
     currentZone.value = 'all'
     store.currentZone = 'all'
+  }
+}
+
+function checkJustAdded() {
+  const id = uni.getStorageSync('justAddedIngredientId')
+  if (id) {
+    uni.removeStorageSync('justAddedIngredientId')
+    justAddedId.value = id
+    setTimeout(() => {
+      if (justAddedId.value === id) justAddedId.value = null
+    }, 1200)
   }
 }
 </script>

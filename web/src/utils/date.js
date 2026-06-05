@@ -4,6 +4,16 @@
 
 const WEEK_DAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
+export const MEAL_LABELS = {
+  breakfast: { label: '早餐', emoji: '🌅', color: '#FFD89B' },
+  lunch: { label: '午餐', emoji: '☀️', color: '#FFE5A0' },
+  afternoon_tea: { label: '下午茶', emoji: '🧁', color: '#FFB7C5' },
+  dinner: { label: '晚餐', emoji: '🌙', color: '#B8A4E3' },
+  supper: { label: '夜宵', emoji: '🌟', color: '#A8D8EA' },
+}
+
+const MEAL_TYPES = Object.keys(MEAL_LABELS)
+
 export function formatDate(date, format = 'YYYY-MM-DD') {
   const d = new Date(date)
   const year = d.getFullYear()
@@ -18,6 +28,27 @@ export function formatDate(date, format = 'YYYY-MM-DD') {
     .replace('DD', day)
     .replace('HH', hours)
     .replace('mm', minutes)
+}
+
+export function formatTime(date) {
+  return formatDate(date, 'HH:mm')
+}
+
+export function getMealTypeFromHour(hour) {
+  if (hour < 10) return 'breakfast'
+  if (hour < 14) return 'lunch'
+  if (hour < 17) return 'afternoon_tea'
+  if (hour < 21) return 'dinner'
+  return 'supper'
+}
+
+export function getMealTypeFromDate(date) {
+  return getMealTypeFromHour(new Date(date).getHours())
+}
+
+export function getMealMeta(type) {
+  if (!type) return { label: '加餐', emoji: '🍴', color: '#E0E0E0' }
+  return MEAL_LABELS[type] || { label: type, emoji: '🍴', color: '#E0E0E0' }
 }
 
 export function getWeekDay(date) {
@@ -68,3 +99,5 @@ export function groupLogsByDate(logs) {
     .sort((a, b) => new Date(b[0]) - new Date(a[0]))
     .map(([date, items]) => ({ date, items }))
 }
+
+export { MEAL_TYPES }

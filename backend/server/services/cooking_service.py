@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from server.models.cooking_log import CookingLog
@@ -15,6 +15,7 @@ async def get_cooking_logs(
     household_id: uuid.UUID | None = None,
     page: int = 1,
     page_size: int = 20,
+    meal_type: str | None = None,
 ) -> tuple[list[CookingLog], int]:
     from sqlalchemy import func
 
@@ -25,6 +26,9 @@ async def get_cooking_logs(
     else:
         return [], 0
 
+    if meal_type:
+        cond = cond & (CookingLog.meal_type == meal_type)
+
     total_result = await db.execute(
         select(func.count()).select_from(CookingLog).where(cond)
     )
@@ -33,7 +37,7 @@ async def get_cooking_logs(
     result = await db.execute(
         select(CookingLog)
         .where(cond)
-        .order_by(CookingLog.cooked_at.desc())
+        .order_by(CookingLog.cooked_at.desc(), CookingLog.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -47,7 +51,7 @@ async def create_cooking_log(
     user: User,
 ) -> CookingLog:
     if data.cooked_at is None:
-        data.cooked_at = date.today()
+        data.cooked_at = datetime.now()
 
     log = CookingLog(
         user_id=user.id,
@@ -55,6 +59,7 @@ async def create_cooking_log(
         recipe_id=uuid.UUID(data.recipe_id) if data.recipe_id else None,
         recipe_name=data.recipe_name,
         cooked_at=data.cooked_at,
+        meal_type=data.meal_type,
         duration=data.duration,
         rating=data.rating,
         note=data.note,
@@ -64,7 +69,6 @@ async def create_cooking_log(
     )
     db.add(log)
 
-    # deduct ingredient quantities
     for item in data.consumed_ingredients:
         ing_id = item.get("ingredient_id")
         if ing_id:
@@ -78,7 +82,6 @@ async def create_cooking_log(
                 if ingredient.quantity <= 0:
                     ingredient.is_consumed = True
 
-    # update recipe rating if linked
     if data.recipe_id and data.rating:
         recipe_result = await db.execute(
             select(Recipe).where(Recipe.id == uuid.UUID(data.recipe_id))
@@ -116,7 +119,7 @@ async def get_stats(db: AsyncSession, user_id: uuid.UUID) -> CookingStatsRespons
     all_meals = result.scalar() or 0
 
     result = await db.execute(
-        select(func.count(func.distinct(CookingLog.cooked_at))).select_from(
+        select(func.count(func.distinct(func.date(CookingLog.cooked_at)))).select_from(
             CookingLog
         ).where(CookingLog.user_id == user_id)
     )
@@ -127,7 +130,7 @@ async def get_stats(db: AsyncSession, user_id: uuid.UUID) -> CookingStatsRespons
         result = await db.execute(
             select(func.count()).select_from(CookingLog).where(
                 CookingLog.user_id == user_id,
-                CookingLog.cooked_at == d,
+                func.date(CookingLog.cooked_at) == d,
             )
         )
         if (result.scalar() or 0) > 0:

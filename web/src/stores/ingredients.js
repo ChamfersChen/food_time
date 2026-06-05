@@ -132,10 +132,65 @@ export const useIngredientsStore = defineStore('ingredients', () => {
     list.value = list.value.filter(i => i.id !== id)
   }
 
+  async function consumeWithQuantity(id, n) {
+    const idx = list.value.findIndex(i => i.id === id)
+    if (idx === -1) return null
+    const current = list.value[idx]
+    const oldQuantity = current.quantity
+    const newQuantity = oldQuantity - n
+    if (newQuantity <= 0) {
+      await markConsumedApi(id)
+      list.value[idx] = { ...current, is_consumed: true, quantity: 0 }
+      return {
+        type: 'fully_consumed',
+        oldQuantity,
+        oldItem: { ...current },
+      }
+    }
+    const res = await updateIngredient(id, { quantity: newQuantity })
+    list.value[idx] = { ...list.value[idx], ...res }
+    return {
+      type: 'partial',
+      oldQuantity,
+      newQuantity,
+    }
+  }
+
+  async function addWithQuantity(id, n) {
+    const idx = list.value.findIndex(i => i.id === id)
+    if (idx === -1) return null
+    const current = list.value[idx]
+    const newQuantity = Number(current.quantity) + n
+    const res = await updateIngredient(id, { quantity: newQuantity })
+    list.value[idx] = { ...list.value[idx], ...res }
+    return { newQuantity }
+  }
+
+  async function restoreConsumed(snapshot) {
+    if (!snapshot) return
+    if (snapshot.type === 'fully_consumed') {
+      const res = await updateIngredient(snapshot.oldItem.id, {
+        is_consumed: false,
+        quantity: snapshot.oldQuantity,
+      })
+      const idx = list.value.findIndex(i => i.id === snapshot.oldItem.id)
+      if (idx > -1) {
+        list.value[idx] = { ...list.value[idx], ...res }
+      }
+    } else if (snapshot.type === 'partial') {
+      const res = await updateIngredient(snapshot.id, { quantity: snapshot.oldQuantity })
+      const idx = list.value.findIndex(i => i.id === snapshot.id)
+      if (idx > -1) {
+        list.value[idx] = { ...list.value[idx], ...res }
+      }
+    }
+  }
+
   return {
     list, loading, currentFilter, currentZone, searchKeyword, pendingCategoryFilter,
     CATEGORIES, ZONES, UNITS,
     notConsumed, expiringItems, expiredItems, byZone, byCategory, categorySummary, filteredList,
     fetchAll, fetchOne, addOne, editOne, markConsumed, removeOne,
+    consumeWithQuantity, addWithQuantity, restoreConsumed,
   }
 })

@@ -24,6 +24,23 @@ export const useCookingLogsStore = defineStore('cookingLogs', () => {
     }
   }
 
+  async function appendLogs(params = {}) {
+    loading.value = true
+    try {
+      const res = await getCookingLogs(params)
+      const list = res.list || res || []
+      const seen = new Set(logs.value.map(l => l.id))
+      const fresh = list.filter(l => !seen.has(l.id))
+      logs.value = [...logs.value, ...fresh]
+      return { list: fresh, total: res.total ?? list.length }
+    } catch (e) {
+      console.error('加载更多烹饪记录失败', e)
+      return { list: [], total: 0 }
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchLog(id) {
     try {
       const res = await getCookingLog(id)
@@ -64,6 +81,6 @@ export const useCookingLogsStore = defineStore('cookingLogs', () => {
   return {
     logs, loading, currentLog,
     groupedLogs, totalMeals,
-    fetchLogs, fetchLog, createLog, updateLog, removeLog,
+    fetchLogs, appendLogs, fetchLog, createLog, updateLog, removeLog,
   }
 })

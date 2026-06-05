@@ -7,7 +7,8 @@ from typing import Optional
 class CookingLogCreate(BaseModel):
     recipe_id: Optional[str] = None
     recipe_name: str
-    cooked_at: Optional[date] = None
+    cooked_at: Optional[datetime] = None
+    meal_type: Optional[str] = None
     duration: Optional[int] = None
     rating: Optional[int] = Field(None, ge=1, le=5)
     note: Optional[str] = None
@@ -29,7 +30,8 @@ class CookingLogResponse(BaseModel):
     household_id: uuid.UUID
     recipe_id: Optional[uuid.UUID] = None
     recipe_name: str
-    cooked_at: date
+    cooked_at: datetime
+    meal_type: Optional[str] = None
     duration: Optional[int] = None
     rating: Optional[int] = None
     note: Optional[str] = None

@@ -13,6 +13,10 @@
       "style": { "navigationBarTitleText": "添加食材" }
     },
     {
+      "path": "pages/fridge/detail",
+      "style": { "navigationBarTitleText": "食材详情" }
+    },
+    {
       "path": "pages/recipes/index",
       "style": { "navigationBarTitleText": "菜谱推荐" }
     },

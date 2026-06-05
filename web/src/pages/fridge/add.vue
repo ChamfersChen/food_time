@@ -219,8 +219,11 @@ async function onSubmit() {
       await store.editOne(editId.value, data)
       uni.showToast({ title: '修改成功', icon: 'success' })
     } else {
-      await store.addOne(data)
-      uni.showToast({ title: '添加成功', icon: 'success' })
+      const res = await store.addOne(data)
+      if (res && res.id) {
+        uni.setStorageSync('justAddedIngredientId', res.id)
+      }
+      uni.showToast({ title: '添加成功 ✨', icon: 'success' })
     }
     setTimeout(() => uni.navigateBack(), 500)
   } catch (e) {

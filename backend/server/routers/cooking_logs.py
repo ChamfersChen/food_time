@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from server.database import get_db
 from server.models.user import User
 from server.models.cooking_log import CookingLog
@@ -21,10 +21,17 @@ router = APIRouter(prefix="/cooking-logs", tags=["烹饪记录"])
 async def list_cooking_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    meal_type: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = await get_cooking_logs(db, user_id=current_user.id, page=page, page_size=page_size)
+    items, total = await get_cooking_logs(
+        db,
+        user_id=current_user.id,
+        page=page,
+        page_size=page_size,
+        meal_type=meal_type,
+    )
     await db.commit()
     return {
         "list": [CookingLogResponse.model_validate(i) for i in items],
@@ -61,11 +68,16 @@ async def calendar_dates(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    next_month = month + 1
+    next_year = year
+    if next_month > 12:
+        next_month = 1
+        next_year = year + 1
     result = await db.execute(
-        select(CookingLog.cooked_at).where(
+        select(func.date(CookingLog.cooked_at)).where(
             CookingLog.user_id == current_user.id,
             CookingLog.cooked_at >= date(year, month, 1),
-            CookingLog.cooked_at < date(year + month // 12, month % 12 + 1, 1),
+            CookingLog.cooked_at < date(next_year, next_month, 1),
         ).distinct()
     )
     dates = [row[0].isoformat() for row in result.all()]
@@ -82,7 +94,7 @@ async def logs_by_date(
     result = await db.execute(
         select(CookingLog).where(
             CookingLog.user_id == current_user.id,
-            CookingLog.cooked_at == date,
+            func.date(CookingLog.cooked_at) == date,
         ).order_by(CookingLog.created_at.desc())
     )
     items = list(result.scalars().all())
@@ -127,6 +139,8 @@ async def update_log(
     log.recipe_name = data.recipe_name
     if data.cooked_at:
         log.cooked_at = data.cooked_at
+    if data.meal_type is not None:
+        log.meal_type = data.meal_type
     if data.duration is not None:
         log.duration = data.duration
     if data.rating is not None:
